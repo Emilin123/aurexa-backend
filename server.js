@@ -6,7 +6,8 @@ const axios = require('axios');
 const app = express();
 app.use(cors());
 app.use(express.json());
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+const supabaseUrl = (process.env.SUPABASE_URL || '').trim().replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
+const supabase = createClient(supabaseUrl, process.env.SUPABASE_SERVICE_KEY);
 app.get('/', (req,res)=> res.send('Aurexa Backend OK'));
 app.get('/test', (req,res)=>{
   res.send(`<html><body style="background:gold;padding:20px;font-family:sans-serif"><h2>TEST AUREXA DORADO</h2><input id="cup" placeholder="CUP" style="width:100%;padding:12px"><br><br><input id="monto" placeholder="Monto" style="width:100%;padding:12px"><br><br><input id="tokens" placeholder="Tokens" style="width:100%;padding:12px"><br><br><button onclick="enviar()" style="padding:15px;width:100%;background:black;color:gold">Solicitar Compra</button><pre id="res" style="background:white;padding:10px;margin-top:20px"></pre><script>async function enviar(){const cup=document.getElementById('cup').value;const monto=document.getElementById('monto').value;const tokens=document.getElementById('tokens').value;const r=await fetch('/api/solicitar-compra',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cup,monto,tokens})});const j=await r.json();document.getElementById('res').innerText=JSON.stringify(j,null,2);}<\/script></body></html>`);
