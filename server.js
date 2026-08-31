@@ -121,7 +121,7 @@ app.post('/api/auth/resend-otp', (req, res) => res.status(410).json({ ok: false,
 app.get('/api/auth/me', requireFirebaseUser, (req, res) => res.json({ ok: true, ...req.firebaseUser }));
 app.post('/api/solicitar-compra', requireFirebaseUser, async (req, res) => {
   try {
-    const { cup, monto, amount, tokens, tokens_requested, full_name, whatsapp, player_id, package_code, payment_reference } = req.body || {};
+    const { cup, monto, amount, tokens, tokens_requested, full_name, whatsapp, package_code, payment_reference } = req.body || {};     const lootlockerPlayerId = req.firebaseUser.uid;
     const numericAmount = Number(monto ?? amount), numericTokens = Number(tokens ?? tokens_requested);
     if (!Number.isFinite(numericAmount) || numericAmount <= 0) return res.status(400).json({ ok: false, error: 'Monto inválido' });
     if (!Number.isFinite(numericTokens) || numericTokens <= 0) return res.status(400).json({ ok: false, error: 'Cantidad de diamantes inválida' });
