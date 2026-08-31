@@ -1,7 +1,0 @@
-SUPABASE_URL=https://rykzieqrftkpvohhwvzz.supabase.co
-SUPABASE_SERVICE_KEY=sb_publishable_fvF-4f3Ql3gIyFao3iKqeg_2Zg2y3oJ
-BOT_TOKEN_JEFE=8906728109:AAERfxSR63cINXx6Urt_leZjhi7UDFYH_xo
-ADMIN_TELEGRAM_ID=7519855566
-ADMIN_PHONE=5355720394
-PORT=3000
-RENDER_EXTERNAL_URL=https://aurexa-backend.onrender.com
