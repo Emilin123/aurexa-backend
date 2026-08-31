@@ -125,9 +125,9 @@ app.post('/api/solicitar-compra', requireFirebaseUser, async (req, res) => {
     const numericAmount = Number(monto ?? amount), numericTokens = Number(tokens ?? tokens_requested);
     if (!Number.isFinite(numericAmount) || numericAmount <= 0) return res.status(400).json({ ok: false, error: 'Monto inválido' });
     if (!Number.isFinite(numericTokens) || numericTokens <= 0) return res.status(400).json({ ok: false, error: 'Cantidad de diamantes inválida' });
-    const { data, error } = await supabase.from('purchase_requests').insert({ cup_code: cup || null, amount: numericAmount, tokens_requested: numericTokens, status: 'pending', full_name: full_name || req.firebaseUser.displayName || null, whatsapp: whatsapp || null, player_id: player_id || null, package_code: package_code || null, payment_reference: payment_reference || null }).select().single();
+    const { data, error } = await supabase.from('purchase_requests').insert({ cup_code: cup || null, amount: numericAmount, tokens_requested: numericTokens, status: 'pending', full_name: full_name || req.firebaseUser.displayName || null, whatsapp: whatsapp || null, player_id: lootlockerPlayerId, package_code: package_code || null, payment_reference: payment_reference || null }).select().single();
     if (error) throw error;
-    await notifyAdmin(`🟡 NUEVA SOLICITUD\nID: ${data.id}\nUsuario: ${req.firebaseUser.email || req.firebaseUser.uid}\nJugador: ${player_id || 'no indicado'}\nDiamantes: ${numericTokens}\nReferencia: ${payment_reference || 'no indicada'}\n\nPara entregar: /aprobar ${data.id}`);
+    await notifyAdmin(`🟡 NUEVA SOLICITUD\nID: ${data.id}\nUsuario: ${req.firebaseUser.email || req.firebaseUser.uid}\nJugador: ${lootlockerPlayerId}\nDiamantes: ${numericTokens}\nReferencia: ${payment_reference || 'no indicada'}\n\nPara entregar: /aprobar ${data.id}`);
     res.json({ ok: true, data });
   } catch (error) { res.status(500).json({ ok: false, error: error.message }); }
 });
