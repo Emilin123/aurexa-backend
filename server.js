@@ -37,7 +37,7 @@ async function firebaseUserFromToken(idToken) {
   if (!idToken) throw new Error('Falta el token de Firebase');
   const data = await firebaseIdentity('accounts:lookup', { idToken });
   const user = data.users?.[0];
-  if (!user || user.emailVerified === false) throw new Error('La cuenta de Firebase no está verificada');
+  if (!user) throw new Error('La cuenta de Firebase no está disponible');
   return { id: user.localId, uid: user.localId, email: user.email || null, displayName: user.displayName || null, emailVerified: user.emailVerified !== false };
 }
 function bearerToken(req) {
