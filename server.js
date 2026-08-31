@@ -3,25 +3,134 @@ const express = require('express');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
 const axios = require('axios');
+
 const app = express();
-app.use(cors());
-app.use(express.json());
+app.use(cors({ origin: true, credentials: true }));
+app.use(express.json({ limit: '1mb' }));
+
 const supabaseUrl = (process.env.SUPABASE_URL || '').trim().replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
 const supabase = createClient(supabaseUrl, process.env.SUPABASE_SERVICE_KEY);
-app.get('/', (req,res)=> res.send('Aurexa Backend OK'));
-app.get('/test', (req,res)=>{
-  res.send(`<html><body style="background:gold;padding:20px;font-family:sans-serif"><h2>TEST AUREXA DORADO</h2><input id="cup" placeholder="CUP" style="width:100%;padding:12px"><br><br><input id="monto" placeholder="Monto" style="width:100%;padding:12px"><br><br><input id="tokens" placeholder="Tokens" style="width:100%;padding:12px"><br><br><button onclick="enviar()" style="padding:15px;width:100%;background:black;color:gold">Solicitar Compra</button><pre id="res" style="background:white;padding:10px;margin-top:20px"></pre><script>async function enviar(){const cup=document.getElementById('cup').value;const monto=document.getElementById('monto').value;const tokens=document.getElementById('tokens').value;const r=await fetch('/api/solicitar-compra',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cup,monto,tokens})});const j=await r.json();document.getElementById('res').innerText=JSON.stringify(j,null,2);}<\/script></body></html>`);
+const TELEGRAM_TOKEN = process.env.BOT_TOKEN;
+const ADMIN_CHAT_ID = String(process.env.ADMIN_CHAT_ID || '');
+const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || 'https://aurexa-backend.onrender.com').replace(/\/+$/, '');
+const LOOTLOCKER_BASE = (process.env.LOOTLOCKER_API_BASE || 'https://api.lootlocker.io/server').replace(/\/+$/, '');
+const LOOTLOCKER_SERVER_KEY = process.env.LOOTLOCKER_SERVER_KEY;
+const LOOTLOCKER_CURRENCY_ID = process.env.LOOTLOCKER_CURRENCY_ID || '01KZ9MV6VX83SGVQDZXXRS86FD';
+const FIREBASE_API_KEY = String(process.env.FIREBASE_API_KEY || '').trim();
+const FIREBASE_PROJECT_ID = String(process.env.FIREBASE_PROJECT_ID || 'aurexa-7e36c').trim();
+const FIREBASE_IDENTITY_URL = 'https://identitytoolkit.googleapis.com/v1';
+
+function firebaseConfigured() {
+  return FIREBASE_API_KEY.length > 20 && FIREBASE_PROJECT_ID === 'aurexa-7e36c';
+}
+async function firebaseIdentity(path, payload) {
+  if (!firebaseConfigured()) throw new Error('Firebase Auth no está configurado en el servidor');
+  try {
+    const { data } = await axios.post(`${FIREBASE_IDENTITY_URL}/${path}?key=${encodeURIComponent(FIREBASE_API_KEY)}`, payload, { timeout: 15000 });
+    return data;
+  } catch (error) {
+    const message = error.response?.data?.error?.message || 'No se pudo validar la cuenta de Firebase';
+    const e = new Error(message); e.status = error.response?.status || 502; throw e;
+  }
+}
+async function firebaseUserFromToken(idToken) {
+  if (!idToken) throw new Error('Falta el token de Firebase');
+  const data = await firebaseIdentity('accounts:lookup', { idToken });
+  const user = data.users?.[0];
+  if (!user || user.emailVerified === false) throw new Error('La cuenta de Firebase no está verificada');
+  return { id: user.localId, uid: user.localId, email: user.email || null, displayName: user.displayName || null, emailVerified: user.emailVerified !== false };
+}
+function bearerToken(req) {
+  const value = String(req.headers.authorization || '');
+  return value.startsWith('Bearer ') ? value.slice(7).trim() : '';
+}
+async function requireFirebaseUser(req, res, next) {
+  try { req.firebaseUser = await firebaseUserFromToken(bearerToken(req)); next(); }
+  catch (error) { res.status(401).json({ ok: false, error: error.message || 'Sesión inválida' }); }
+}
+async function telegram(method, payload) {
+  if (!TELEGRAM_TOKEN) return null;
+  const { data } = await axios.post(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/${method}`, payload); return data;
+}
+async function notifyAdmin(text) {
+  if (TELEGRAM_TOKEN && ADMIN_CHAT_ID) await telegram('sendMessage', { chat_id: ADMIN_CHAT_ID, text });
+}
+async function lootLockerSession() {
+  if (!LOOTLOCKER_SERVER_KEY) throw new Error('LootLocker server key is not configured');
+  const { data } = await axios.post(`${LOOTLOCKER_BASE}/session`, { game_version: '1.0.0' }, { headers: { 'x-server-key': LOOTLOCKER_SERVER_KEY, 'LL-Version': '2021-03-01', 'Content-Type': 'application/json' } });
+  if (!data?.token) throw new Error('LootLocker did not return a server session token'); return data.token;
+}
+async function grantDiamonds(playerId, amount) {
+  if (!playerId) throw new Error('Missing LootLocker player ID');
+  const token = await lootLockerSession();
+  const headers = { 'x-auth-token': token, 'LL-Version': '2021-03-01', 'Content-Type': 'application/json' };
+  const walletResponse = await axios.get(`${LOOTLOCKER_BASE}/wallet/holder/${encodeURIComponent(playerId)}`, { headers });
+  const walletId = walletResponse.data?.id; if (!walletId) throw new Error('LootLocker wallet not found for this player ID');
+  const creditResponse = await axios.post(`${LOOTLOCKER_BASE}/balances/credit`, { amount: String(amount), wallet_id: walletId, currency_id: LOOTLOCKER_CURRENCY_ID }, { headers });
+  return { wallet_id: walletId, balance: creditResponse.data?.balance || null };
+}
+async function approvePurchase(requestId) {
+  const { data: request, error } = await supabase.from('purchase_requests').select('*').eq('id', requestId).single();
+  if (error || !request) throw new Error('Solicitud no encontrada');
+  if (request.status === 'delivered') return 'Esta solicitud ya fue entregada.';
+  if (!request.player_id) throw new Error('La solicitud no tiene player_id de LootLocker');
+  const { data: locked, error: lockError } = await supabase.from('purchase_requests').update({ status: 'processing', delivery_error: null }).eq('id', requestId).in('status', ['pending', 'approved']).select().single();
+  if (lockError || !locked) return 'La solicitud ya está siendo procesada o no está pendiente.';
+  try {
+    await grantDiamonds(request.player_id, request.tokens_requested);
+    const { error: updateError } = await supabase.from('purchase_requests').update({ status: 'delivered', delivered_at: new Date().toISOString(), delivery_error: null }).eq('id', requestId);
+    if (updateError) throw updateError;
+    return `✅ Entrega completada\nSolicitud: ${requestId}\nJugador: ${request.player_id}\nDiamantes: ${request.tokens_requested}`;
+  } catch (deliveryError) {
+    await supabase.from('purchase_requests').update({ status: 'pending', delivery_error: deliveryError.message }).eq('id', requestId); throw deliveryError;
+  }
+}
+async function handleTelegramUpdate(update) {
+  const message = update?.message; if (!message?.text || String(message.chat?.id) !== ADMIN_CHAT_ID) return;
+  const match = message.text.trim().match(/^(?:\/?aprobar|\/?approve|aprobado)\s+([0-9a-f-]{20,})$/i); if (!match) return;
+  try { await telegram('sendMessage', { chat_id: message.chat.id, text: await approvePurchase(match[1]) }); }
+  catch (error) { await telegram('sendMessage', { chat_id: message.chat.id, text: `❌ No se entregó: ${error.message}` }); }
+}
+
+app.get('/', (req, res) => res.json({ ok: true, service: 'Aurexa Backend', firebaseProject: FIREBASE_PROJECT_ID }));
+app.get('/health', (req, res) => res.json({ ok: true, firebaseConfigured: firebaseConfigured() }));
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { email, password, username } = req.body || {};
+    if (!email || !password || String(password).length < 6) return res.status(400).json({ ok: false, error: 'Correo o contraseña inválidos' });
+    const data = await firebaseIdentity('accounts:signUp', { email, password, returnSecureToken: true });
+    res.json({ ok: true, token: data.idToken, user: { id: data.localId, uid: data.localId, email: data.email, displayName: username || null } });
+  } catch (error) { res.status(error.status || 400).json({ ok: false, error: error.message }); }
 });
-app.post('/api/solicitar-compra', async (req,res)=>{
-  try{
-    const { cup, monto, tokens } = req.body;
-    const { data, error } = await supabase.from('purchase_requests').insert({ cup_code: cup, amount: monto, tokens_requested: tokens, status: 'pending' }).select().single();
-    if(error) throw error;
-    if(process.env.BOT_TOKEN && process.env.ADMIN_CHAT_ID){
-      await axios.post('https://api.telegram.org/bot'+process.env.BOT_TOKEN+'/sendMessage',{chat_id: process.env.ADMIN_CHAT_ID, text: '🟡 NUEVA COMPRA\nCUP: '+cup+'\nMonto: '+monto+'\nTokens: '+tokens});
-    }
-    res.json({ok:true, data});
-  }catch(e){ res.status(500).json({ok:false, error:e.message}); }
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body || {};
+    const data = await firebaseIdentity('accounts:signInWithPassword', { email, password, returnSecureToken: true });
+    res.json({ ok: true, token: data.idToken, user: { id: data.localId, uid: data.localId, email: data.email, displayName: data.displayName || null } });
+  } catch (error) { res.status(error.status || 401).json({ ok: false, error: error.message }); }
 });
+app.post('/api/auth/google', async (req, res) => {
+  try { const user = await firebaseUserFromToken(req.body?.idToken); res.json({ ok: true, token: req.body.idToken, user }); }
+  catch (error) { res.status(401).json({ ok: false, error: error.message }); }
+});
+app.post('/api/auth/verify', async (req, res) => {
+  try { const token = req.body?.idToken || bearerToken(req); const user = await firebaseUserFromToken(token); res.json({ ok: true, token, user }); }
+  catch (error) { res.status(401).json({ ok: false, error: error.message }); }
+});
+app.post('/api/auth/resend-otp', (req, res) => res.status(410).json({ ok: false, error: 'La verificación por código fue reemplazada por la verificación segura de Firebase.' }));
+app.get('/api/auth/me', requireFirebaseUser, (req, res) => res.json({ ok: true, ...req.firebaseUser }));
+app.post('/api/solicitar-compra', requireFirebaseUser, async (req, res) => {
+  try {
+    const { cup, monto, amount, tokens, tokens_requested, full_name, whatsapp, player_id, package_code, payment_reference } = req.body || {};
+    const numericAmount = Number(monto ?? amount), numericTokens = Number(tokens ?? tokens_requested);
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0) return res.status(400).json({ ok: false, error: 'Monto inválido' });
+    if (!Number.isFinite(numericTokens) || numericTokens <= 0) return res.status(400).json({ ok: false, error: 'Cantidad de diamantes inválida' });
+    const { data, error } = await supabase.from('purchase_requests').insert({ cup_code: cup || null, amount: numericAmount, tokens_requested: numericTokens, status: 'pending', full_name: full_name || req.firebaseUser.displayName || null, whatsapp: whatsapp || null, player_id: player_id || null, package_code: package_code || null, payment_reference: payment_reference || null }).select().single();
+    if (error) throw error;
+    await notifyAdmin(`🟡 NUEVA SOLICITUD\nID: ${data.id}\nUsuario: ${req.firebaseUser.email || req.firebaseUser.uid}\nJugador: ${player_id || 'no indicado'}\nDiamantes: ${numericTokens}\nReferencia: ${payment_reference || 'no indicada'}\n\nPara entregar: /aprobar ${data.id}`);
+    res.json({ ok: true, data });
+  } catch (error) { res.status(500).json({ ok: false, error: error.message }); }
+});
+app.post('/api/telegram/webhook', async (req, res) => { res.sendStatus(200); try { await handleTelegramUpdate(req.body); } catch (error) { console.error('Telegram webhook error:', error.message); } });
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, ()=>console.log('Live en '+PORT));
+app.listen(PORT, async () => { console.log('Aurexa Backend live on ' + PORT); if (TELEGRAM_TOKEN) { try { await telegram('setWebhook', { url: `${PUBLIC_BASE_URL}/api/telegram/webhook` }); } catch (error) { console.error('Telegram webhook setup failed:', error.message); } } });
