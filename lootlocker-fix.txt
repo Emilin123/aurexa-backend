@@ -161,6 +161,10 @@ app.post('/api/solicitar-compra', requireFirebaseUser, async (req, res) => {
  if (!lootlockerPlayerId) return res.status(409).json({ ok: false, error: 'La cuenta aún no tiene una asociación LootLocker verificada' });
  const numericAmount = Number(monto ?? amount), numericTokens = Number(tokens ?? tokens_requested);
  if (!Number.isFinite(numericAmount) || numericAmount <= 0) return res.status(400).json({ ok: false, error: 'Monto inválido' });
+ if (payment_reference) {
+  const { data: existing, error: existingError } = await supabase.from('purchase_requests').select('*').eq('payment_reference', payment_reference).maybeSingle();
+  if (!existingError && existing) return res.json({ ok: true, idempotent: true, data: existing });
+ }
  if (!Number.isFinite(numericTokens) || numericTokens <= 0) return res.status(400).json({ ok: false, error: 'Cantidad de diamantes inválida' });
  const { data, error } = await supabase.from('purchase_requests').insert({ cup_code: cup || null, amount: numericAmount, tokens_requested: numericTokens, status: 'pending', full_name: full_name || req.firebaseUser.displayName || null, whatsapp: whatsapp || null, player_id: lootlockerPlayerId, package_code: package_code || null, payment_reference: payment_reference || null }).select().single();
  if (error) throw error;
