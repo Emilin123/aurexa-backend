@@ -160,6 +160,7 @@ app.post('/api/solicitar-compra', requireFirebaseUser, async (req, res) => {
  const lootlockerPlayerId = await lootLockerPlayerForFirebase(req.firebaseUser.uid);
  if (!lootlockerPlayerId) return res.status(409).json({ ok: false, error: 'La cuenta aún no tiene una asociación LootLocker verificada' });
  const numericAmount = Number(monto ?? amount), numericTokens = Number(tokens ?? tokens_requested);
+ if (!payment_reference || String(payment_reference).trim().length < 4) return res.status(400).json({ ok: false, error: 'Referencia de pago obligatoria' });
  if (!Number.isFinite(numericAmount) || numericAmount <= 0) return res.status(400).json({ ok: false, error: 'Monto inválido' });
  if (payment_reference) {
   const { data: existing, error: existingError } = await supabase.from('purchase_requests').select('*').eq('payment_reference', payment_reference).maybeSingle();
