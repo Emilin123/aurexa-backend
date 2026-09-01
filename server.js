@@ -99,6 +99,21 @@ async function handleTelegramUpdate(update) {
 }
 
 app.get('/', (req, res) => res.json({ ok: true, service: 'Aurexa Backend', firebaseProject: FIREBASE_PROJECT_ID }));
+app.get('/api/catalog', async (req, res) => {
+ try {
+  const { data, error } = await supabase.from('aurexa_catalog').select('*').order('sort_order', { ascending: true });
+  if (!error && data) return res.json({ ok: true, data });
+ } catch (_) {}
+ res.json({ ok: true, data: [
+  { code: 'gratis', name: 'Bot Gratis', price: 0, diamonds: 0, speed: 3.4, duration_days: 999, profit: 50, automatic: false },
+  { code: 'basico', name: 'Bot Básico', price: 500, diamonds: 300, speed: 8, duration_days: 10, profit: 1620, automatic: false },
+  { code: 'pro', name: 'Bot Pro', price: 1200, diamonds: 1000, speed: 30, duration_days: 10, profit: 6200, automatic: false, tag: 'MÁS POPULAR' },
+  { code: 'titan', name: 'Bot Titan', price: 2000, diamonds: 1800, speed: 66, duration_days: 10, profit: 14040, automatic: true, tag: 'AUTOMÁTICO' },
+  { code: 'basic', name: 'Trading Básico', return_percent: 25, duration_days: 15, minimum: 100 },
+  { code: 'pro-trading', name: 'Trading Pro', return_percent: 45, duration_days: 30, minimum: 500 },
+  { code: 'titan-trading', name: 'Trading Titan', return_percent: 75, duration_days: 30, minimum: 1000 }
+ ] });
+});
 app.get('/health', (req, res) => res.json({ ok: true, firebaseConfigured: firebaseConfigured() }));
 app.post('/api/auth/register', async (req, res) => {
  try {
