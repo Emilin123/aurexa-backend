@@ -1,48 +1,66 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const { createClient } = require('@supabase/supabase-js');
-const axios = require('axios');
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import crypto from 'node:crypto';
+import { z } from 'zod';
+import { cert, getApps, initializeApp } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 
 const app = express();
-app.use(cors({ origin: true, credentials: true }));
-app.use(express.json({ limit: '1mb' }));
+const port = Number(process.env.PORT || 10000);
+const allowedOrigins = new Set((process.env.CORS_ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean));
+const deliveryEnabled = process.env.DELIVERY_ENABLED === 'true';
+const tradingEnabled = process.env.TRADING_ENABLED === 'true';
+const schemaReady = process.env.AUREXA_V3_SCHEMA_READY === 'true';
+const requestId = () => `req_${crypto.randomUUID()}`;
 
-const supabaseUrl = (process.env.SUPABASE_URL || '').trim().replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
-const supabase = createClient(supabaseUrl, process.env.SUPABASE_SERVICE_KEY);
-const TELEGRAM_TOKEN = process.env.BOT_TOKEN;
-const ADMIN_CHAT_ID = String(process.env.ADMIN_CHAT_ID || '');
-const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || 'https://aurexa-backend.onrender.com').replace(/\/+$/, '');
-const LOOTLOCKER_BASE = (process.env.LOOTLOCKER_API_BASE || 'https://api.lootlocker.io/server').replace(/\/+$/, '');
-const LOOTLOCKER_SERVER_KEY = process.env.LOOTLOCKER_SERVER_KEY;
-const LOOTLOCKER_GAME_KEY = String(process.env.LOOTLOCKER_GAME_KEY || '').trim();
-const LOOTLOCKER_GAME_ID = String(process.env.LOOTLOCKER_GAME_ID || '106957').trim();
-const LOOTLOCKER_CURRENCY_ID = process.env.LOOTLOCKER_CURRENCY_ID || '01KZ9MV6VX83SGVQDZXXRS86FD';
-const FIREBASE_API_KEY = String(process.env.FIREBASE_API_KEY || '').trim();
-const FIREBASE_PROJECT_ID = String(process.env.FIREBASE_PROJECT_ID || 'aurexa-7e36c').trim();
-const FIREBASE_IDENTITY_URL = 'https://identitytoolkit.googleapis.com/v1';
-function firebaseConfigured() { return FIREBASE_API_KEY.length > 20 && FIREBASE_PROJECT_ID === 'aurexa-7e36c'; }
-async function firebaseIdentity(path, payload) { if (!firebaseConfigured()) throw new Error('Firebase Auth no está configurado en el servidor'); try { const { data } = await axios.post(`${FIREBASE_IDENTITY_URL}/${path}?key=${encodeURIComponent(FIREBASE_API_KEY)}`, payload, { timeout: 15000 }); return data; } catch (error) { const message = error.response?.data?.error?.message || 'No se pudo validar la cuenta de Firebase'; const e = new Error(message); e.status = error.response?.status || 502; throw e; } }
-async function firebaseUserFromToken(idToken) { if (!idToken) throw new Error('Falta el token de Firebase'); const data = await firebaseIdentity('accounts:lookup', { idToken }); const user = data.users?.[0]; if (!user) throw new Error('La cuenta de Firebase no está disponible'); return { id: user.localId, uid: user.localId, email: user.email || null, displayName: user.displayName || null, emailVerified: user.emailVerified !== false }; }
-function bearerToken(req) { const value = String(req.headers.authorization || ''); return value.startsWith('Bearer ') ? value.slice(7).trim() : ''; }
-async function requireFirebaseUser(req, res, next) { try { req.firebaseUser = await firebaseUserFromToken(bearerToken(req)); next(); } catch (error) { res.status(401).json({ ok: false, error: error.message || 'Sesión inválida' }); } }
-async function telegram(method, payload) { if (!TELEGRAM_TOKEN) return null; const { data } = await axios.post(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/${method}`, payload); return data; }
-async function notifyAdmin(text) { if (TELEGRAM_TOKEN && ADMIN_CHAT_ID) await telegram('sendMessage', { chat_id: ADMIN_CHAT_ID, text }); }
-async function lootLockerSession() { if (!LOOTLOCKER_SERVER_KEY) throw new Error('LootLocker server key is not configured'); const { data } = await axios.post(`${LOOTLOCKER_BASE}/session`, { game_version: '1.0.0', game_id: LOOTLOCKER_GAME_ID }, { headers: { 'x-server-key': LOOTLOCKER_SERVER_KEY, 'LL-Version': '2021-03-01', 'Content-Type': 'application/json' } }); if (!data?.token) throw new Error('LootLocker did not return a server session token'); return data.token; }
-async function lootLockerPlayerForFirebase(firebaseUid) { const { data, error } = await supabase.from('lootlocker_player_mappings').select('lootlocker_player_id').eq('firebase_uid', firebaseUid).eq('game_id', LOOTLOCKER_GAME_ID).maybeSingle(); if (error) throw new Error('No se pudo consultar la asociación LootLocker'); return data?.lootlocker_player_id ? String(data.lootlocker_player_id) : null; }
-async function grantDiamonds(playerId, amount) { if (!playerId) throw new Error('Missing LootLocker player ID'); const token = await lootLockerSession(); const headers = { 'x-auth-token': token, 'LL-Version': '2021-03-01', 'Content-Type': 'application/json' }; const walletResponse = await axios.get(`${LOOTLOCKER_BASE}/wallet/holder/${encodeURIComponent(playerId)}`, { headers }); const walletId = walletResponse.data?.id; if (!walletId) throw new Error('LootLocker wallet not found for this player ID'); const creditResponse = await axios.post(`${LOOTLOCKER_BASE}/balances/credit`, { amount: String(amount), wallet_id: walletId, currency_id: LOOTLOCKER_CURRENCY_ID }, { headers }); return { wallet_id: walletId, balance: creditResponse.data?.balance || null }; }
-async function approvePurchase(requestId) { const { data: request, error } = await supabase.from('purchase_requests').select('*').eq('id', requestId).single(); if (error || !request) throw new Error('Solicitud no encontrada'); if (request.status === 'delivered') return 'Esta solicitud ya fue entregada.'; if (!request.player_id) throw new Error('La solicitud no tiene player_id de LootLocker'); const { data: locked, error: lockError } = await supabase.from('purchase_requests').update({ status: 'processing', delivery_error: null }).eq('id', requestId).in('status', ['pending', 'approved']).select().single(); if (lockError || !locked) return 'La solicitud ya está siendo procesada o no está pendiente.'; try { await grantDiamonds(request.player_id, request.tokens_requested); const { error: updateError } = await supabase.from('purchase_requests').update({ status: 'delivered', delivered_at: new Date().toISOString(), delivery_error: null }).eq('id', requestId); if (updateError) throw updateError; return `✅ Entrega completada\nSolicitud: ${requestId}\nJugador: ${request.player_id}\nDiamantes: ${request.tokens_requested}`; } catch (deliveryError) { await supabase.from('purchase_requests').update({ status: 'pending', delivery_error: deliveryError.message }).eq('id', requestId); throw deliveryError; } }
-async function handleTelegramUpdate(update) { const message = update?.message; if (!message?.text || String(message.chat?.id) !== ADMIN_CHAT_ID) return; const match = message.text.trim().match(/^(?:\/?aprobar|\/?approve|aprobado)\s+([0-9a-f-]{20,})$/i); if (!match) return; try { await telegram('sendMessage', { chat_id: message.chat.id, text: await approvePurchase(match[1]) }); } catch (error) { await telegram('sendMessage', { chat_id: message.chat.id, text: `❌ No se entregó: ${error.message}` }); } }
-app.get('/', (req, res) => res.json({ ok: true, service: 'Aurexa Backend', firebaseProject: FIREBASE_PROJECT_ID }));
-app.get('/api/catalog', async (req, res) => { try { const { data, error } = await supabase.from('aurexa_catalog').select('*').order('sort_order', { ascending: true }); if (!error && data?.length) return res.json({ ok: true, data }); } catch (_) {} res.json({ ok: true, data: [{ code: 'gratis', name: 'Bot Gratis', price: 0, diamonds: 0, speed: 3.4, duration_days: 999, profit: 50, automatic: false }, { code: 'basico', name: 'Bot Básico', price: 500, diamonds: 300, speed: 8, duration_days: 10, profit: 1620, automatic: false }, { code: 'pro', name: 'Bot Pro', price: 1200, diamonds: 1000, speed: 30, duration_days: 10, profit: 6200, automatic: false, tag: 'MÁS POPULAR' }, { code: 'titan', name: 'Bot Titan', price: 2000, diamonds: 1800, speed: 66, duration_days: 10, profit: 14040, automatic: true, tag: 'AUTOMÁTICO' }] }); });
-app.get('/health', (req, res) => res.json({ ok: true, firebaseConfigured: firebaseConfigured() }));
-app.post('/api/auth/register', async (req, res) => { try { const { email, password, username } = req.body || {}; if (!email || !password || String(password).length < 6) return res.status(400).json({ ok: false, error: 'Correo o contraseña inválidos' }); const data = await firebaseIdentity('accounts:signUp', { email, password, returnSecureToken: true }); res.json({ ok: true, token: data.idToken, user: { id: data.localId, uid: data.localId, email: data.email, displayName: username || null } }); } catch (error) { res.status(error.status || 400).json({ ok: false, error: error.message }); } });
-app.post('/api/auth/login', async (req, res) => { try { const { email, password } = req.body || {}; const data = await firebaseIdentity('accounts:signInWithPassword', { email, password, returnSecureToken: true }); res.json({ ok: true, token: data.idToken, user: { id: data.localId, uid: data.localId, email: data.email, displayName: data.displayName || null } }); } catch (error) { res.status(error.status || 401).json({ ok: false, error: error.message }); } });
-app.post('/api/auth/google', async (req, res) => { try { const user = await firebaseUserFromToken(req.body?.idToken); res.json({ ok: true, token: req.body.idToken, user }); } catch (error) { res.status(401).json({ ok: false, error: error.message }); } });
-app.post('/api/auth/verify', async (req, res) => { try { const token = req.body?.idToken || bearerToken(req); const user = await firebaseUserFromToken(token); res.json({ ok: true, token, user }); } catch (error) { res.status(401).json({ ok: false, error: error.message }); } });
-app.post('/api/auth/resend-otp', (req, res) => res.status(410).json({ ok: false, error: 'La verificación por código fue reemplazada por la verificación segura de Firebase.' }));
-app.get('/api/auth/me', requireFirebaseUser, (req, res) => res.json({ ok: true, ...req.firebaseUser }));
-app.post('/api/lootlocker/associate', requireFirebaseUser, async (req, res) => { try { if (!LOOTLOCKER_GAME_KEY) return res.status(503).json({ ok: false, error: 'LootLocker no está configurado para asociación' }); const playerIdentifier = `aurexa_${req.firebaseUser.uid}`; const { data: session } = await axios.post('https://api.lootlocker.io/game/v2/session/guest', { game_key: LOOTLOCKER_GAME_KEY, game_version: '1.0.0', player_identifier: playerIdentifier }, { timeout: 15000 }); const playerId = session?.player_id; if (!playerId) throw new Error('LootLocker no devolvió un jugador válido'); const { error } = await supabase.from('lootlocker_player_mappings').upsert({ firebase_uid: req.firebaseUser.uid, lootlocker_player_id: String(playerId), game_id: LOOTLOCKER_GAME_ID, verified_at: new Date().toISOString(), verified_by: 'server_guest_session', active: true }, { onConflict: 'firebase_uid' }); if (error) throw error; res.json({ ok: true, associated: true }); } catch (error) { res.status(502).json({ ok: false, error: 'No se pudo verificar la cuenta de LootLocker' }); } });
-app.post('/api/solicitar-compra', requireFirebaseUser, async (req, res) => { try { const { cup, monto, amount, tokens, tokens_requested, full_name, whatsapp, package_code, payment_reference } = req.body || {}; const lootlockerPlayerId = await lootLockerPlayerForFirebase(req.firebaseUser.uid); if (!lootlockerPlayerId) return res.status(409).json({ ok: false, error: 'La cuenta aún no tiene una asociación LootLocker verificada' }); const numericAmount = Number(monto ?? amount), numericTokens = Number(tokens ?? tokens_requested); if (!Number.isFinite(numericAmount) || numericAmount <= 0) return res.status(400).json({ ok: false, error: 'Monto inválido' }); if (!Number.isFinite(numericTokens) || numericTokens <= 0) return res.status(400).json({ ok: false, error: 'Cantidad de diamantes inválida' }); const { data, error } = await supabase.from('purchase_requests').insert({ cup_code: cup || null, amount: numericAmount, tokens_requested: numericTokens, status: 'pending', full_name: full_name || req.firebaseUser.displayName || null, whatsapp: whatsapp || null, player_id: lootlockerPlayerId, package_code: package_code || null, payment_reference: payment_reference || null }).select().single(); if (error) throw error; await notifyAdmin(`🟡 NUEVA SOLICITUD\nID: ${data.id}\nUsuario: ${req.firebaseUser.email || req.firebaseUser.uid}\nJugador: ${lootlockerPlayerId}\nDiamantes: ${numericTokens}\nReferencia: ${payment_reference || 'no indicada'}\n\nPara entregar: /aprobar ${data.id}`); res.json({ ok: true, data }); } catch (error) { res.status(500).json({ ok: false, error: error.message }); } });
-app.post('/api/telegram/webhook', async (req, res) => { res.sendStatus(200); try { await handleTelegramUpdate(req.body); } catch (error) { console.error('Telegram webhook error:', error.message); } });
-const PORT = process.env.PORT || 10000; app.listen(PORT, async () => { console.log('Aurexa Backend live on ' + PORT); if (TELEGRAM_TOKEN) { try { await telegram('setWebhook', { url: `${PUBLIC_BASE_URL}/api/telegram/webhook` }); } catch (error) { console.error('Telegram webhook setup failed:', error.message); } } });
+app.disable('x-powered-by');
+app.use(helmet());
+app.use(cors({ origin(origin, cb) { if (!origin || allowedOrigins.has(origin)) return cb(null, true); return cb(new Error('origin_not_allowed')); }, credentials: false }));
+app.use(express.json({ limit: '256kb', strict: true }));
+app.use((req, res, next) => { req.requestId = requestId(); res.setHeader('X-Request-Id', req.requestId); next(); });
+
+function ok(res, data, meta = {}) { return res.json({ ok: true, data, meta: { requestId: res.getHeader('X-Request-Id'), ...meta } }); }
+function fail(res, status, code, message, details = {}) { return res.status(status).json({ ok: false, error: { code, message, details, requestId: res.getHeader('X-Request-Id') } }); }
+function authConfigured() { return Boolean(process.env.FIREBASE_SERVICE_ACCOUNT_JSON && process.env.FIREBASE_PROJECT_ID); }
+function firebaseAdmin() {
+  if (!authConfigured()) return null;
+  if (!getApps().length) initializeApp({ credential: cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON)), projectId: process.env.FIREBASE_PROJECT_ID });
+  return getAuth();
+}
+async function requireAuth(req, res, next) {
+  const header = req.get('authorization') || '';
+  if (!header.startsWith('Bearer ')) return fail(res, 401, 'UNAUTHENTICATED', 'Autenticación requerida');
+  try {
+    const auth = firebaseAdmin();
+    if (!auth) return fail(res, 503, 'AUTH_NOT_READY', 'La autenticación server-side no está habilitada');
+    req.user = await auth.verifyIdToken(header.slice(7), true);
+    return next();
+  } catch { return fail(res, 401, 'UNAUTHENTICATED', 'Token inválido o expirado'); }
+}
+
+app.get('/', (_req, res) => ok(res, { service: 'aurexa-v3-backend', mode: 'staging-only' }));
+app.get('/health', (_req, res) => ok(res, { liveness: true, deliveryEnabled, tradingEnabled }));
+app.get('/ready', (_req, res) => {
+  const checks = { auth: authConfigured(), schema: schemaReady, deliveryDisabled: !deliveryEnabled, tradingDisabled: !tradingEnabled };
+  const ready = checks.auth && checks.schema && checks.deliveryDisabled && checks.tradingDisabled;
+  return res.status(ready ? 200 : 503).json({ ok: ready, data: { checks } });
+});
+
+app.get('/api/v2/catalog', (_req, res) => {
+  if (process.env.AUREXA_CATALOG_ENABLED !== 'true' || !schemaReady) return fail(res, 503, 'CATALOG_NOT_READY', 'El catálogo v3 aún no está habilitado');
+  return ok(res, { items: [] }, { nextCursor: null, hasMore: false });
+});
+app.get('/api/v2/me/wallet', requireAuth, (_req, res) => fail(res, 503, 'WALLET_NOT_READY', 'La wallet v3 aún no está habilitada'));
+app.get('/api/v2/me/wallet/transactions', requireAuth, (_req, res) => fail(res, 503, 'WALLET_NOT_READY', 'La wallet v3 aún no está habilitada'));
+app.get('/api/v2/purchases', requireAuth, (_req, res) => fail(res, 503, 'PURCHASES_NOT_READY', 'Las compras v3 aún no están habilitadas'));
+app.post('/api/v2/purchases', requireAuth, (_req, res) => fail(res, 503, 'PURCHASES_NOT_READY', 'Las compras v3 aún no están habilitadas'));
+app.post('/api/v2/withdrawals', requireAuth, (_req, res) => fail(res, 503, 'WITHDRAWALS_NOT_READY', 'Los retiros v3 aún no están habilitados'));
+app.all(['/api/v2/trades', '/api/v2/trades/*'], (_req, res) => fail(res, 403, 'FEATURE_DISABLED', 'El trading está deshabilitado'));
+app.all('/api/lootlocker/*', (_req, res) => fail(res, 403, 'FEATURE_DISABLED', 'La integración LootLocker está deshabilitada'));
+
+app.use((_req, res) => fail(res, 404, 'NOT_FOUND', 'Ruta no encontrada'));
+app.use((err, _req, res, _next) => { if (err?.message === 'origin_not_allowed') return fail(res, 403, 'CORS_DENIED', 'Origen no autorizado'); return fail(res, 500, 'INTERNAL_ERROR', 'Error interno'); });
+
+if (process.env.NODE_ENV !== 'test') app.listen(port, () => console.log(`AUREXA v3 backend listening on ${port}`));
+export { app };
