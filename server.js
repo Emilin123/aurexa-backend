@@ -24,10 +24,29 @@ const FIREBASE_PROJECT_ID = String(process.env.FIREBASE_PROJECT_ID || 'aurexa-7e
 const FIREBASE_IDENTITY_URL = 'https://identitytoolkit.googleapis.com/v1';
 function firebaseConfigured() { return FIREBASE_API_KEY.length > 20 && FIREBASE_PROJECT_ID === 'aurexa-7e36c'; }
 async function firebaseIdentity(path, payload) { if (!firebaseConfigured()) throw new Error('Firebase Auth no está configurado en el servidor'); try { const { data } = await axios.post(`${FIREBASE_IDENTITY_URL}/${path}?key=${encodeURIComponent(FIREBASE_API_KEY)}`, payload, { timeout: 15000 }); return data; } catch (error) { const message = error.response?.data?.error?.message || 'No se pudo validar la cuenta de Firebase'; const e = new Error(message); e.status = error.response?.status || 502; throw e; } }
-async function firebaseUserFromToken(idToken) { if (!idToken) throw new Error('Falta el token de Firebase'); const data = await firebaseIdentity('accounts:lookup', { idToken }); const user = data.users?.[0]; if (!user) throw new Error('La cuenta de Firebase no está disponible'); return { id: user.localId, uid: user.localId, email: user.email || null, displayName: user.displayName || null, emailVerified: user.emailVerified !== false }; }
+async function firebaseUserFromToken(idToken) { if (!idToken) throw new Error('Falta el token de Firebase'); const data = await firebaseIdentity('accounts:lookup', { idToken }); const user = data.users?.[0]; if (!user) throw new Error('La cuenta de Firebase no está disponible'); return { id: user.localId, uid: user.localId, email: user.email || null, displayName: user.displayName || null, emailVerified: user.emailVerified === true }; }
 function bearerToken(req) { const value = String(req.headers.authorization || ''); return value.startsWith('Bearer ') ? value.slice(7).trim() : ''; }
 async function requireFirebaseUser(req, res, next) { try { req.firebaseUser = await firebaseUserFromToken(bearerToken(req)); next(); } catch (error) { res.status(401).json({ ok: false, error: error.message || 'Sesión inválida' }); } }
 registerSecurityRoutes(app, { supabase, requireFirebaseUser });
+
+app.post('/api/v2/mine', requireFirebaseUser, async (req, res) => {
+  try {
+    if (req.firebaseUser.emailVerified !== true) return res.status(403).json({ ok: false, error: 'Debes verificar tu correo electrónico antes de minar' });
+    const idem = String(req.headers['idempotency-key'] || '').trim();
+    if (!idem || idem.length < 10 || idem.length > 200) return res.status(400).json({ ok: false, error: 'Falta una clave de idempotencia válida' });
+    const { data: profile, error: profileError } = await supabase.from('profiles').select('id').eq('firebase_uid', req.firebaseUser.uid).maybeSingle();
+    if (profileError) throw profileError;
+    if (!profile?.id) return res.status(409).json({ ok: false, error: 'Perfil AUREXA no encontrado' });
+    const { data, error } = await supabase.rpc('aurexa_mining_claim', { p_user_id: profile.id, p_idempotency_key: idem });
+    if (error) throw error;
+    if (data?.decision === 'running') return res.status(202).json({ ok: true, data });
+    return res.json({ ok: true, data });
+  } catch (error) {
+    console.error('mining error:', error.message);
+    return res.status(500).json({ ok: false, error: 'No se pudo procesar la minería de forma segura' });
+  }
+});
+
 async function telegram(method, payload) { if (!TELEGRAM_TOKEN) return null; const { data } = await axios.post(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/${method}`, payload); return data; }
 async function notifyAdmin(text) { if (TELEGRAM_TOKEN && ADMIN_CHAT_ID) await telegram('sendMessage', { chat_id: ADMIN_CHAT_ID, text }); }
 async function lootLockerSession() { if (!LOOTLOCKER_SERVER_KEY) throw new Error('LootLocker server key is not configured'); const { data } = await axios.post(`${LOOTLOCKER_BASE}/session`, { game_version: '1.0.0', game_id: LOOTLOCKER_GAME_ID }, { headers: { 'x-server-key': LOOTLOCKER_SERVER_KEY, 'LL-Version': '2021-03-01', 'Content-Type': 'application/json' } }); if (!data?.token) throw new Error('LootLocker did not return a server session token'); return data.token; }
