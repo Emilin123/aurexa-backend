@@ -28,7 +28,14 @@ async function verifyFirebaseIdToken(token,projectId){
     if(!claims.sub)throw new Error('Token Firebase sin usuario');
     return claims;
   }catch(e){
-    console.error('Firebase JWT verification detail',{name:e.name,message:e.message,code:e.code||null,kid:decoded.header.kid,alg:decoded.header.alg,projectId});
+    const actualAud=decoded?.payload?.aud||'';
+    const actualIss=decoded?.payload?.iss||'';
+    console.error('Firebase JWT verification detail',{name:e.name,message:e.message,code:e.code||null,kid:decoded.header.kid,alg:decoded.header.alg,expectedProjectId:projectId,actualAud,actualIss});
+    if(e.name==='JsonWebTokenError'&&/audience invalid/i.test(String(e.message||''))){
+      const x=new Error(`Token Firebase de proyecto incorrecto. aud recibido: ${actualAud||'desconocido'}; esperado: ${projectId}`);
+      x.firebaseCode='JWT_AUDIENCE_MISMATCH';
+      throw x;
+    }
     const x=new Error(`Token Firebase inválido: ${e.name}: ${e.message}`);
     x.firebaseCode='JWT_'+String(e.name||'INVALID');
     throw x;
