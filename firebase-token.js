@@ -28,7 +28,8 @@ async function verifyFirebaseIdToken(token,projectId){
     if(!claims.sub)throw new Error('Token Firebase sin usuario');
     return claims;
   }catch(e){
-    const x=new Error(`Token Firebase inválido: ${e.name}`);
+    console.error('Firebase JWT verification detail',{name:e.name,message:e.message,code:e.code||null,kid:decoded.header.kid,alg:decoded.header.alg,projectId});
+    const x=new Error(`Token Firebase inválido: ${e.name}: ${e.message}`);
     x.firebaseCode='JWT_'+String(e.name||'INVALID');
     throw x;
   }
