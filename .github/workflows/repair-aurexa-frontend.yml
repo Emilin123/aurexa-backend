@@ -1,0 +1,28 @@
+name: Repair AUREXA frontend syntax
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repair invalid object keys
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('app-beta-final.js')
+          s=p.read_text()
+          keys=['invalid-credential','wrong-password','user-not-found','invalid-email','too-many-requests','invalid-action-code','expired-action-code','unauthorized-continue-uri']
+          for k in keys:
+              s=s.replace(k+':', "'"+k+"':")
+          p.write_text(s)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git diff --quiet; then echo 'No repair needed'; exit 0; fi
+          git add app-beta-final.js
+          git commit -m 'fix: repair frontend auth error object keys'
+          git push
