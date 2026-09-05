@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
 const axios = require('axios');
+const { registerSecurityRoutes } = require('./security');
 
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
@@ -26,6 +27,7 @@ async function firebaseIdentity(path, payload) { if (!firebaseConfigured()) thro
 async function firebaseUserFromToken(idToken) { if (!idToken) throw new Error('Falta el token de Firebase'); const data = await firebaseIdentity('accounts:lookup', { idToken }); const user = data.users?.[0]; if (!user) throw new Error('La cuenta de Firebase no está disponible'); return { id: user.localId, uid: user.localId, email: user.email || null, displayName: user.displayName || null, emailVerified: user.emailVerified !== false }; }
 function bearerToken(req) { const value = String(req.headers.authorization || ''); return value.startsWith('Bearer ') ? value.slice(7).trim() : ''; }
 async function requireFirebaseUser(req, res, next) { try { req.firebaseUser = await firebaseUserFromToken(bearerToken(req)); next(); } catch (error) { res.status(401).json({ ok: false, error: error.message || 'Sesión inválida' }); } }
+registerSecurityRoutes(app, { supabase, requireFirebaseUser });
 async function telegram(method, payload) { if (!TELEGRAM_TOKEN) return null; const { data } = await axios.post(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/${method}`, payload); return data; }
 async function notifyAdmin(text) { if (TELEGRAM_TOKEN && ADMIN_CHAT_ID) await telegram('sendMessage', { chat_id: ADMIN_CHAT_ID, text }); }
 async function lootLockerSession() { if (!LOOTLOCKER_SERVER_KEY) throw new Error('LootLocker server key is not configured'); const { data } = await axios.post(`${LOOTLOCKER_BASE}/session`, { game_version: '1.0.0', game_id: LOOTLOCKER_GAME_ID }, { headers: { 'x-server-key': LOOTLOCKER_SERVER_KEY, 'LL-Version': '2021-03-01', 'Content-Type': 'application/json' } }); if (!data?.token) throw new Error('LootLocker did not return a server session token'); return data.token; }
