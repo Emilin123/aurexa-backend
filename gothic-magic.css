@@ -1,0 +1,190 @@
+/* AUREXA — Complete Gothic Magic / Sorcery Interface
+   Visual system: dark fantasy, arcane luxury, crystals, diamonds, rubies, gothic typography.
+   This layer intentionally overrides the existing UI without changing application logic. */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800;900&family=UnifrakturCook:wght@700&family=MedievalSharp&display=swap');
+
+:root{
+  --gm-black:#030205;
+  --gm-ink:#08060b;
+  --gm-wine:#210711;
+  --gm-red:#7f1730;
+  --gm-ruby:#d12d55;
+  --gm-purple:#6d28b8;
+  --gm-violet:#b66cff;
+  --gm-gold:#b9873d;
+  --gm-gold2:#f2d58e;
+  --gm-cream:#f8e8c4;
+  --gm-muted:#9d8e86;
+  --gm-line:#c99b454d;
+}
+
+html,body{
+  background:
+    radial-gradient(circle at 75% 5%,#4c0b2540 0,transparent 25%),
+    radial-gradient(circle at 15% 45%,#5d1bb52b 0,transparent 24%),
+    radial-gradient(circle at 50% 110%,#8c19352b 0,transparent 35%),
+    var(--gm-black)!important;
+  color:var(--gm-cream)!important;
+}
+
+body:before,body:after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+}
+body:before{background-image:radial-gradient(#d6a63a22 1px,transparent 1px);background-size:38px 38px;opacity:.16;mix-blend-mode:screen}
+body:after{background:linear-gradient(90deg,transparent 0 49.8%,#d6a63a0c 50%,transparent 50.2%);opacity:.35}
+
+.app,.auth{position:relative;z-index:1}
+
+/* Gothic typography hierarchy */
+.brand strong,.layout nav .brand strong,.auth-card h1{
+  font-family:'UnifrakturCook','MedievalSharp',Cinzel,serif!important;
+  font-weight:700!important;
+  letter-spacing:.08em!important;
+  color:var(--gm-gold2)!important;
+  text-shadow:0 0 16px #9a55ff44,0 2px 5px #000,0 0 35px #d6a63a22!important;
+}
+h1,h2,h3,h4,.page-head h1,.hero-copy h2,.hero-card h2,.mine-card h2,.profile-card h2,.card h3,.product h3,.support-card h3,.setting b,.stat b,.balance>strong,.banner strong,.nav-item span,.side-title,button{
+  font-family:Cinzel,'MedievalSharp',serif!important;
+}
+
+/* Top bar becomes an arcane command bar */
+.app header,.top{
+  background:linear-gradient(180deg,#050309f5,#0d0710e8 72%,#130711dd)!important;
+  border-bottom:1px solid var(--gm-gold)!important;
+  box-shadow:0 8px 45px #000,0 1px 18px #7c1c3b33!important;
+}
+.app header:after,.top:after{content:'✦  ◇  ✦';position:absolute;left:50%;bottom:-12px;transform:translateX(-50%);padding:0 14px;background:#07050a;color:var(--gm-gold);font-size:13px;letter-spacing:8px}
+
+/* Sidebar: gothic cathedral / grimoire */
+.layout nav,aside{
+  width:286px!important;
+  background:
+    radial-gradient(circle at 50% 8%,#6b1a9b18,transparent 23%),
+    linear-gradient(180deg,#050408,#0b050c 46%,#050408)!important;
+  border-right:1px solid var(--gm-gold)!important;
+  box-shadow:12px 0 55px #000!important;
+  position:relative!important;
+}
+.layout nav:before,aside:before{
+  content:'☽  ✦  ☾';position:absolute;top:10px;left:0;right:0;text-align:center;color:#c99b4538;font-size:15px;letter-spacing:9px;pointer-events:none;
+}
+.layout nav .brand{
+  background:
+    radial-gradient(circle at 50% 42%,#8c45e04a,transparent 25%),
+    linear-gradient(145deg,#160b19,#08050b)!important;
+  border:1px solid #d6a63a99!important;
+  clip-path:polygon(0 12px,12px 0,calc(100% - 12px) 0,100% 12px,100% calc(100% - 12px),calc(100% - 12px) 100%,12px 100%,0 calc(100% - 12px))!important;
+  box-shadow:inset 0 0 50px #7c27bb25,0 12px 35px #000!important;
+}
+.layout nav .brand:before{content:'♢';display:block;position:absolute;color:#b86dff55;font-size:76px;text-shadow:0 0 30px #9c45ff;transform:translateY(-4px)}
+.layout nav .brand:after{content:'◆';color:#c38cff!important;text-shadow:0 0 12px #c38cff,0 0 45px #7b31c9!important;font-size:38px!important}
+.layout nav button,.nav-item{
+  border-radius:2px!important;
+  border:1px solid transparent!important;
+  background:linear-gradient(90deg,transparent,#160b1420,transparent)!important;
+  color:#a99b91!important;
+  position:relative!important;
+}
+.layout nav button:before,.nav-item:before{content:'◆';font-size:6px;color:#b9873d55;position:absolute;left:5px}
+.layout nav button:hover,.nav-item:hover{background:linear-gradient(90deg,#5a102a66,#24102a55,transparent)!important;color:var(--gm-gold2)!important;border-color:#b9873d38!important;box-shadow:inset 3px 0 #8f2744,0 0 20px #65142d22!important}
+.layout nav button.active,.nav-item.active{
+  background:linear-gradient(90deg,#68142eaa,#2a0b2d88,transparent)!important;
+  color:#ffe8b0!important;
+  border-color:#d6a63a55!important;
+  box-shadow:inset 4px 0 var(--gm-gold),0 0 28px #7d1d3d44!important;
+}
+.layout nav button.active:after,.nav-item.active:after{content:'✦';position:absolute;right:13px;color:#c88cff;text-shadow:0 0 12px #b05cff}
+.side-quote{background:linear-gradient(145deg,#1c0811,#08050b)!important;border:1px solid #c99b4566!important;box-shadow:inset 0 0 35px #000,0 0 25px #7b1c3a22!important}
+
+/* All cards become ornate magical panels */
+.hero-card,.mine-card,.wallet-main,.profile-card,.card,.notice,.support-card,.stat,.product,.profile-panel,.reference-activity,.settings-list{
+  border:1px solid #c99b4575!important;
+  border-radius:2px!important;
+  background:
+    radial-gradient(circle at 50% 0,#8a2dbd1b,transparent 34%),
+    linear-gradient(145deg,#180b13,#07050a 65%,#120811)!important;
+  box-shadow:0 18px 55px #000,inset 0 0 40px #5d123422!important;
+}
+.hero-card:before,.mine-card:before,.wallet-main:before,.profile-card:before,.card:before,.product:before,.profile-panel:before,.support-card:before{
+  content:'✦';position:absolute;inset:7px;border:1px solid #d6a63a25;pointer-events:none;color:#c99b3d22;font-size:11px;padding:3px;box-shadow:inset 0 0 25px #000;z-index:0;
+}
+.hero-card:after,.mine-card:after,.wallet-main:after,.profile-card:after,.card:after,.product:after,.support-card:after{
+  content:'◆';position:absolute;right:8px;bottom:4px;inset:auto;color:#b9873d33;font-size:13px;pointer-events:none;z-index:3;
+}
+
+/* Hero: sorceress / crystal chamber */
+.hero-card{
+  min-height:390px!important;
+  background:
+    radial-gradient(circle at 25% 50%,#b34dff30,transparent 16%),
+    radial-gradient(circle at 75% 10%,#762bb155,transparent 30%),
+    radial-gradient(circle at 50% 100%,#8c19352b,transparent 38%),
+    linear-gradient(115deg,#08050d,#120811 52%,#1b0711)!important;
+}
+.hero-card:before{background:linear-gradient(135deg,transparent 48%,#c99b4512 49%,transparent 50%)!important}
+.hero-magic,.hero-orb,.mine-core,.wallet-symbol{filter:drop-shadow(0 0 14px #b66cff)!important}
+.hero-magic:after{content:'◆'!important;color:#d7b5ff!important;text-shadow:0 0 15px #d09aff,0 0 50px #8c32db,0 0 95px #6c1eb4!important;animation:gm-pulse 2.8s ease-in-out infinite}
+.hero-magic:before{border-radius:50% 50% 45% 45%;box-shadow:0 0 30px #8c3bdf33;}
+.hero-copy h2{font-family:'MedievalSharp',Cinzel,serif!important;color:#ffe7b0!important;text-shadow:0 3px 20px #000,0 0 30px #8e43d955!important}
+.hero-copy h2 strong{font-family:'UnifrakturCook',Cinzel,serif!important;color:#d8b3ff!important;text-shadow:0 0 20px #8735c9!important}
+
+/* Crystals and diamonds across numeric UI */
+.balance>strong,.wallet-main strong,.stat b,.price,.product>strong{color:#f4d894!important;text-shadow:0 0 18px #b46cff44,0 2px 4px #000!important}
+.avatar,.avatar-big,.profile-avatar{background:radial-gradient(circle at 40% 35%,#9d45e0,#210b2b 58%,#08050a)!important;border:1px solid #e0b85d!important;box-shadow:0 0 25px #8e3fca66,inset 0 0 20px #000!important}
+.product-icon,.hero-orb,.mine-core,.wallet-symbol{color:#e6d6ff!important;text-shadow:0 0 12px #fff,0 0 35px #a64fff,0 0 75px #6720a9!important}
+
+/* Ruby buttons / gold trim */
+.primary{background:linear-gradient(145deg,#8f1f35,#4b0d1a 52%,#b17a28)!important;border:1px solid #f0ce7a!important;color:#ffecc3!important;box-shadow:0 0 25px #9b224233,inset 0 1px #fff6!important;clip-path:polygon(0 5px,5px 0,calc(100% - 5px) 0,100% 5px,100% calc(100% - 5px),calc(100% - 5px) 100%,5px 100%,0 calc(100% - 5px))!important}
+.secondary{background:#10070d!important;border:1px solid #c99b4566!important;color:#e7cb92!important;border-radius:2px!important}
+.primary:hover{filter:brightness(1.2);box-shadow:0 0 35px #b72d554d!important}
+
+/* Progress bars look like enchanted energy */
+.xp,.bar{background:#170b14!important;border:1px solid #7b3d4d22!important}
+.xp i,.bar i{background:linear-gradient(90deg,#6a1e9f,#bd70ff,#e2b45b)!important;box-shadow:0 0 14px #9e51e8!important}
+
+/* Quick cards: crystal reliquary */
+.quick-grid,.quick{gap:13px!important}
+.quick-card,.quick button{border:1px solid #c99b4566!important;border-radius:2px!important;background:linear-gradient(160deg,#190a17,#07050a 64%,#16070e)!important;box-shadow:0 12px 35px #000,inset 0 0 30px #7a1f9d20!important}
+.quick-card:after{border:1px solid #d6a63a35!important;background:radial-gradient(circle at 50% 50%,#9b45e03d,transparent 25%),linear-gradient(160deg,#21102b,#08050b)!important}
+.quick-card:before{color:#cf9aff!important;text-shadow:0 0 20px #a849ff,0 0 55px #6d25a8!important}
+.quick-card h3,.quick strong{color:#ffe6ad!important}
+.quick-card p,.quick small{color:#9d8e86!important}
+
+/* Activity / side panels */
+.reference-activity{background:linear-gradient(180deg,#120711,#060409)!important}
+.activity-list>div,.row,.setting,.admin-row{border-color:#c99b451f!important}
+.activity-list b{background:radial-gradient(circle,#7e2fc4,#19091f)!important;border-color:#d6a63a88!important;color:#f2d38e!important}
+
+/* Gothic footer / notices */
+.banner{border:1px solid #d6a63a88!important;background:radial-gradient(circle at 50% 50%,#9d38e044,transparent 42%),linear-gradient(90deg,#07040b,#310d28,#07040b)!important;box-shadow:inset 0 0 45px #000,0 14px 40px #000!important}
+.banner strong{font-family:'UnifrakturCook',Cinzel,serif!important;color:#ffe5a6!important;font-size:25px!important}
+.bottom{background:#050309f2!important;border-top:1px solid #c99b4566!important}
+
+/* Auth / login: occult grimoire gate */
+.auth{background:radial-gradient(circle at 50% 35%,#7620a833,transparent 28%),radial-gradient(circle at 50% 100%,#c99b4514,transparent 32%),#030205!important}
+.auth-card{border:1px solid #d6a63a99!important;background:linear-gradient(145deg,#190a14f5,#07050af5)!important;box-shadow:0 30px 100px #000,inset 0 0 45px #7620a82b!important}
+.auth-card:before{border:1px solid #d6a63a35!important}
+.auth-card h1{font-size:52px!important}
+.auth-card label{color:#bca58d!important}
+.auth-card label input{background:#050308!important;border:1px solid #c99b4535!important;border-radius:2px!important}
+.auth-card label input:focus{border-color:#c99b45aa!important;box-shadow:0 0 15px #7b35c733!important}
+
+/* Magical ornament glyphs on important headings */
+.page-head h1:before,.card-title h3:before,.profile-card h2:before{content:'✦';color:#9b54dc;font-size:.55em;margin-right:9px;text-shadow:0 0 12px #a84cff}
+
+@keyframes gm-pulse{0%,100%{transform:scale(1) rotate(8deg);opacity:.78}50%{transform:scale(1.12) rotate(12deg);opacity:1}}
+
+@media(max-width:1050px){
+  .layout nav,aside{width:260px!important}
+  .dashboard-grid,.reference-dashboard{grid-template-columns:1fr!important}
+}
+@media(max-width:720px){
+  .layout nav{width:270px!important}
+  .app header,.top{height:64px!important}
+  .hero-card{min-height:300px!important;height:300px!important;padding:20px!important}
+  .hero-copy h2{font-size:25px!important;left:40%!important}
+  .hero-copy h2 strong{font-size:36px!important}
+  .quick-grid{grid-template-columns:1fr 1fr!important}
+  .quick-card{min-height:205px!important}
+  .auth-card h1{font-size:43px!important}
+}
