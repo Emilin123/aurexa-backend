@@ -1,5 +1,5 @@
 (function(){
-  const styles=['/aurexa-mobile-visual.css?v=20260907-1','/aurexa-cinematic-fix.css?v=20260907-2','/aurexa-scene-pass.css?v=20260907-1'];
+  const styles=['/aurexa-mobile-visual.css?v=20260907-1','/aurexa-cinematic-fix.css?v=20260907-2','/aurexa-scene-pass.css?v=20260906-2'];
   styles.forEach(href=>{if(!document.querySelector('link[href^="'+href.split('?')[0]+'"]')){const l=document.createElement('link');l.rel='stylesheet';l.href=href;document.head.appendChild(l)}});
   const navLabels=[['home','Inicio','⌂'],['mining','Mina','⚒'],['packages','Tienda','▣'],['chat','Chat / Trading','▰'],['wallet','Mis Diamantes','◇'],['history','Historial','◷'],['ranking','Ranking','♛'],['support','Soporte','◉'],['settings','Configuración','⚙']];
   const nav=()=>document.querySelector('#side');
