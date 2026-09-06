@@ -1,0 +1,115 @@
+/* AUREXA — Medieval Gothic Magic RPG UI
+   Direction: hand-crafted dark-fantasy game interface, not neon cyberpunk.
+   References: medieval Gothic ornament, dark RPG reliquary panels, carved stone/iron,
+   aged leather, parchment, burnished gold, restrained crystal magic. */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Cinzel+Decorative:wght@700;900&family=UnifrakturCook:wght@700&display=swap');
+
+:root{
+  --mg-bg:#090807;--mg-stone:#171310;--mg-stone2:#211a15;--mg-iron:#302923;
+  --mg-leather:#24110f;--mg-wine:#4b1218;--mg-red:#8e1f2b;
+  --mg-gold:#a88443;--mg-gold-hi:#e3c982;--mg-gold-dark:#5e4521;
+  --mg-parch:#d7c39b;--mg-text:#e9dcc1;--mg-muted:#988b76;
+  --mg-crystal:#8a63d2;--mg-crystal-hi:#cbb7ff;--mg-shadow:#000;
+}
+
+html,body{background:#080706!important;color:var(--mg-text)!important}
+body{font-family:Cinzel,Georgia,serif!important;background-image:
+  radial-gradient(ellipse at 50% 0,#38231822,transparent 38%),
+  linear-gradient(#0004,#0004),
+  repeating-linear-gradient(0deg,#0000 0 3px,#fff000 4px),
+  #080706!important}
+
+/* Remove the previous luminous/neon treatment. The magic is concentrated in small relics. */
+body:before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(circle at 50% 30%,#9a6bd10d,transparent 30%);box-shadow:inset 0 0 160px #000}
+.app,.auth{position:relative;z-index:1}
+
+/* Typography: engraved medieval headings + restrained gothic logo */
+.brand strong,.auth-card h1{font-family:'Cinzel Decorative','UnifrakturCook',serif!important;letter-spacing:.09em!important;color:var(--mg-gold-hi)!important;text-shadow:0 2px 2px #000,0 0 8px #b18a4525!important}
+h1,h2,h3,h4,.page-head h1,.hero-copy h2,.card h3,.product h3,.support-card h3,.side-title,.nav-item span,button{font-family:Cinzel,Georgia,serif!important}
+.page-head h1,.hero-copy h2{font-weight:700!important;color:#ead7ad!important;text-shadow:0 2px 5px #000!important}
+
+/* Main shell — old cathedral wood/iron */
+.layout nav,aside{width:276px!important;background:
+  linear-gradient(90deg,#050504,#15100d 48%,#090806)!important;
+  border-right:2px solid var(--mg-gold-dark)!important;
+  box-shadow:8px 0 35px #000!important}
+.layout nav .brand{margin:18px 14px!important;background:linear-gradient(145deg,#2a1814,#100b09)!important;border:2px solid var(--mg-gold-dark)!important;box-shadow:inset 0 0 0 1px #000,inset 0 0 25px #000,0 8px 20px #000!important;clip-path:none!important;position:relative}
+.layout nav .brand:after{content:'◆';position:absolute;right:13px;top:11px;color:var(--mg-crystal)!important;font-size:25px!important;text-shadow:0 0 9px #9a7bd0!important}
+.layout nav .brand:before{content:''!important}
+
+/* Ornamental navigation: carved tabs, not glowing rectangles */
+.layout nav button,.nav-item{background:linear-gradient(90deg,#17110e,#0b0908)!important;border:1px solid #6e552b44!important;border-left:3px solid transparent!important;border-radius:3px!important;color:#b8aa91!important;margin:3px 12px!important;box-shadow:inset 0 1px #ffffff06!important}
+.layout nav button:hover,.nav-item:hover{background:linear-gradient(90deg,#29140f,#120c0a)!important;border-color:#a884434d!important;color:#e3cf9f!important}
+.layout nav button.active,.nav-item.active{background:linear-gradient(90deg,#45171b,#20100e)!important;border-color:#a8844370!important;border-left-color:var(--mg-gold-hi)!important;color:#f2dfad!important;box-shadow:inset 0 0 18px #000,0 3px 10px #000!important}
+.layout nav button.active:after,.nav-item.active:after{content:'◆';right:12px;color:var(--mg-gold)!important;text-shadow:none!important}
+.side-quote{background:linear-gradient(145deg,#261411,#0b0807)!important;border:1px solid #85652e66!important;box-shadow:inset 0 0 25px #000!important}
+
+/* Top bar — brass/iron RPG HUD */
+.app header,.top{background:linear-gradient(#17120e,#090807)!important;border-bottom:2px solid var(--mg-gold-dark)!important;box-shadow:0 5px 25px #000!important}
+.app header:after,.top:after{content:'✦';bottom:-9px;background:#0a0807;color:var(--mg-gold);padding:0 10px;font-size:10px}
+
+/* All panels use stone/leather/iron + gold filigree */
+.hero-card,.mine-card,.wallet-main,.profile-card,.card,.notice,.support-card,.stat,.product,.profile-panel,.reference-activity,.settings-list{
+  border:1px solid #84672f99!important;border-radius:4px!important;
+  background:
+    linear-gradient(135deg,#251b16aa,#0e0b09f5 48%,#1c110eaa),
+    #110d0b!important;
+  box-shadow:inset 0 0 0 1px #000,inset 0 0 28px #000,0 12px 30px #000!important;
+  position:relative!important;overflow:hidden!important}
+.hero-card:before,.mine-card:before,.wallet-main:before,.profile-card:before,.card:before,.product:before,.profile-panel:before,.support-card:before{
+  content:'';position:absolute;inset:6px;border:1px solid #b18a4540;pointer-events:none;z-index:0}
+.hero-card:after,.mine-card:after,.wallet-main:after,.profile-card:after,.card:after,.product:after,.support-card:after{content:'✦';position:absolute;right:9px;bottom:5px;color:#a8844340;font-size:10px;z-index:3}
+
+/* Hero becomes a medieval fantasy chamber */
+.hero-card{min-height:390px!important;background:
+  radial-gradient(ellipse at 72% 50%,#7458a51c,transparent 24%),
+  linear-gradient(115deg,#080706cc,#24130f99 55%,#100a09ee)!important}
+.hero-copy h2 strong{font-family:'Cinzel Decorative',Cinzel,serif!important;color:#e4cf9c!important;text-shadow:0 2px 5px #000!important}
+.hero-magic,.hero-orb,.mine-core,.wallet-symbol{filter:drop-shadow(0 0 7px #8b6bd066)!important}
+.hero-magic:after{content:'◆'!important;color:#b9a1ed!important;text-shadow:0 0 8px #9171c4,0 0 20px #6d4e9b!important;animation:crystal-breathe 4s ease-in-out infinite}
+@keyframes crystal-breathe{50%{filter:brightness(1.25);transform:scale(1.04)}}
+
+/* Crystal counters: actual jewel treatment, not neon */
+.balance>strong,.wallet-main strong,.stat b,.price,.product>strong{color:#e7cf99!important;text-shadow:0 2px 3px #000!important}
+.product-icon,.hero-orb,.mine-core,.wallet-symbol{color:#cbb8ed!important;text-shadow:0 0 7px #8064ad!important}
+.avatar,.avatar-big,.profile-avatar{background:radial-gradient(circle at 35% 30%,#9273bd,#34243d 45%,#0d0a0b)!important;border:2px solid var(--mg-gold-dark)!important;box-shadow:inset 0 0 12px #000,0 4px 12px #000!important}
+
+/* Buttons — forged metal / ruby leather */
+.primary{background:linear-gradient(#8b2726,#501318)!important;border:1px solid #d0aa5b!important;color:#f4dfaa!important;border-radius:3px!important;box-shadow:inset 0 1px #fff3,0 4px 12px #000!important;clip-path:none!important}
+.primary:hover{background:linear-gradient(#a13732,#63171c)!important;filter:none!important;box-shadow:inset 0 1px #fff3,0 0 14px #9a2c302f!important}
+.secondary{background:linear-gradient(#29211a,#0e0b09)!important;border:1px solid #8b6b34!important;color:#d8c292!important;border-radius:3px!important}
+
+/* Resource bars: gold engraving with subtle arcane color */
+.xp,.bar{background:#0b0908!important;border:1px solid #72562d!important;box-shadow:inset 0 2px 5px #000!important}
+.xp i,.bar i{background:linear-gradient(90deg,#654b8e,#9d7ac8,#c7a45c)!important;box-shadow:0 0 7px #8b6aae66!important}
+
+/* Quick actions: medieval reliquary cards */
+.quick-grid,.quick{gap:12px!important}
+.quick-card,.quick button{border:1px solid #82622f!important;border-radius:4px!important;background:linear-gradient(145deg,#281b16,#0d0a09)!important;box-shadow:inset 0 0 18px #000,0 7px 18px #000!important}
+.quick-card:after{border:1px solid #a8844340!important;background:linear-gradient(145deg,#33221a,#100c0a)!important}
+.quick-card:before{color:#b9a0e2!important;text-shadow:0 0 7px #7f67a855!important}
+.quick-card h3,.quick strong{color:#e2ce9b!important}
+.quick-card p,.quick small{color:#958674!important}
+
+/* Activity, lists and settings */
+.reference-activity{background:linear-gradient(#17100d,#0b0807)!important}
+.activity-list>div,.row,.setting,.admin-row{border-color:#82632f30!important}
+.activity-list b{background:#271b17!important;border:1px solid #9a773b!important;color:#d8c18b!important}
+
+/* Banner/footer */
+.banner{border:1px solid #9d783a!important;background:linear-gradient(90deg,#0a0807,#301516,#0a0807)!important;box-shadow:inset 0 0 30px #000,0 10px 25px #000!important}
+.banner strong{font-family:'Cinzel Decorative',Cinzel,serif!important;color:#e5ce98!important;font-size:22px!important}
+.bottom{background:#070605f5!important;border-top:1px solid #80612f!important}
+
+/* Login: ancient grimoire / castle gate */
+.auth{background:radial-gradient(ellipse at 50% 40%,#3c281b2a,transparent 35%),#080706!important}
+.auth-card{border:2px solid #8d6b35!important;background:linear-gradient(145deg,#211612,#0b0908)!important;box-shadow:inset 0 0 35px #000,0 25px 70px #000!important;border-radius:4px!important}
+.auth-card h1{font-size:48px!important;color:#e2cb93!important}
+.auth-card label{color:#b5a486!important}
+.auth-card label input{background:#090807!important;border:1px solid #70552b!important;border-radius:3px!important;color:#eadbb9!important}
+.auth-card label input:focus{border-color:#b58c45!important;box-shadow:0 0 8px #8e6c3433!important}
+
+.page-head h1:before,.card-title h3:before,.profile-card h2:before{content:'✦';color:#a88443;font-size:.5em;margin-right:8px;text-shadow:none}
+
+@media(max-width:1050px){.layout nav,aside{width:255px!important}.dashboard-grid,.reference-dashboard{grid-template-columns:1fr!important}}
+@media(max-width:720px){.layout nav{width:270px!important}.hero-card{min-height:300px!important;height:300px!important}.quick-grid{grid-template-columns:1fr 1fr!important}.auth-card h1{font-size:40px!important}}
