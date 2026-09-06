@@ -1,0 +1,1 @@
+// AUREXA UI entrypoint placeholder
