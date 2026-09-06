@@ -21,3 +21,10 @@ header{height:78px;position:sticky;top:0;z-index:40;display:grid;grid-template-c
 @media(max-width:430px){.top-right button:last-child{display:none}.page-head h1{font-size:26px}.hero-card{min-height:430px}.hero-magic{right:16px;top:25px}.quick-grid{gap:9px}.quick-card{padding:17px;min-height:165px}.quick-card h3{font-size:12px}.quick-card p{font-size:9px}.mine-card{padding:31px 18px}.mine-core{font-size:72px}.wallet-main{padding:32px 16px}.wallet-main>strong{font-size:46px}.primary,.secondary,.gold{padding:12px 14px}.setting{padding:14px 13px}}
 
 .withdraw-form{display:grid;gap:10px;max-width:520px}.withdraw-form label{display:grid;gap:6px;color:var(--muted);font-size:11px}.withdraw-form input{border:1px solid var(--line);background:#080a10;color:var(--text);padding:11px;border-radius:7px}.withdraw-form .primary{justify-self:start}
+
+/* Dirección visual aprobada: la magia ocupa la escena, no solo los colores */
+.auth{background-image:linear-gradient(180deg,rgba(4,2,10,.2),rgba(4,2,10,.72)),url('/aurexa-gothic-magic-premium.png');background-size:cover;background-position:center;color:var(--text)}
+.auth-card{background:linear-gradient(180deg,rgba(8,4,16,.72),rgba(5,3,10,.94));backdrop-filter:blur(3px);border-color:#e1b95f99;box-shadow:0 0 0 1px #6c3d9a55,0 0 55px #6f36aa55,0 35px 100px #000}
+.auth-card:after{content:'✦  ᛉ  ◇  ᛟ  ✦';position:absolute;left:0;right:0;bottom:10px;text-align:center;color:#8cddff80;font-size:13px;letter-spacing:7px;pointer-events:none}
+.hero-card{background-image:linear-gradient(90deg,rgba(9,4,14,.95) 0%,rgba(9,4,14,.72) 42%,rgba(9,4,14,.2) 100%),url('/aurexa-gothic-magic-premium.png');background-size:cover;background-position:center 35%;border-color:#d7a13a90;box-shadow:inset 0 0 80px #14051d,0 0 30px #672c8d55,var(--shadow)}
+.hero-magic{box-shadow:0 0 20px #8cddff,0 0 70px #6e35b9,0 0 120px #d51f4266}
