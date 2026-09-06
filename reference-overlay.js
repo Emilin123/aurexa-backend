@@ -1,6 +1,8 @@
 (function(){
   const style='/aurexa-mobile-visual.css?v=20260907-1';
   if(!document.querySelector('link[href^="/aurexa-mobile-visual.css"]')){const l=document.createElement('link');l.rel='stylesheet';l.href=style;document.head.appendChild(l)}
+  const fix='/aurexa-cinematic-fix.css?v=20260907-2';
+  if(!document.querySelector('link[href^="/aurexa-cinematic-fix.css"]')){const l=document.createElement('link');l.rel='stylesheet';l.href=fix;document.head.appendChild(l)}
   const navLabels=[['home','Inicio','⌂'],['mining','Mina','⚒'],['packages','Tienda','▣'],['chat','Chat / Trading','▰'],['wallet','Mis Diamantes','◇'],['history','Historial','◷'],['ranking','Ranking','♛'],['support','Soporte','◉'],['settings','Configuración','⚙']];
   const nav=()=>document.querySelector('#side');
   function ensureNav(){const n=nav();if(!n||n.dataset.referenceBuilt)return;n.dataset.referenceBuilt='1';const buttons=[...n.querySelectorAll('button[data-page]')];const by=new Map(buttons.map(b=>[b.dataset.page,b]));const quote=n.querySelector('.side-quote');navLabels.forEach(([key,label,icon])=>{if(by.has(key))return;const b=document.createElement('button');b.dataset.page=key;b.innerHTML='<b>'+icon+'</b><span>'+label+'</span>';if(quote)n.insertBefore(b,quote);else n.appendChild(b)});n.addEventListener('click',e=>{const b=e.target.closest('button[data-page]');if(!b)return;const target=b.dataset.page;if(target==='chat'||target==='ranking'){e.preventDefault();const support=n.querySelector('button[data-page="support"]');if(support)support.click()}})}
