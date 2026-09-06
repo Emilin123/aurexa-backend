@@ -1,0 +1,1 @@
+The visual reference is the user's supplied AUREXA dashboard image. Rebuild the UI composition faithfully.
