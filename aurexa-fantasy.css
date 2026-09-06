@@ -1,0 +1,31 @@
+/* AUREXA FANTASY LAYER */
+:root{--arcane:#8d4cff;--ice:#73e2ff;--ruby:#e51f4d}
+.app{background:radial-gradient(circle at 50% -10%,#5b172a 0,#1b0b18 18%,#070911 52%,#030407 100%)}
+.app:after{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.18;background:radial-gradient(circle at 15% 22%,#7fdcff 0 1px,transparent 2px),radial-gradient(circle at 82% 32%,#ff4d72 0 1px,transparent 2px),radial-gradient(circle at 62% 78%,#ffe3a0 0 1px,transparent 2px);background-size:170px 170px,230px 230px,310px 310px}
+header{background:linear-gradient(180deg,#07070cf7,#090912ed);box-shadow:0 8px 35px #000c,0 0 35px #8d4cff12}
+.brand{position:relative}.brand:before{content:"♛";position:absolute;right:14px;top:1px;color:var(--ruby);font-size:26px;text-shadow:0 0 15px #ff3159}
+.hero-card{min-height:430px;background:radial-gradient(circle at 77% 46%,#5e173255,transparent 25%),radial-gradient(circle at 76% 78%,#087db344,transparent 27%),linear-gradient(135deg,#180a12,#070a11);isolation:isolate}
+.hero-card:after{content:"";position:absolute;right:1%;bottom:-7%;width:min(370px,48%);height:112%;background:url('/assets/aurexa-wizard.svg') center bottom/contain no-repeat;opacity:.98;filter:drop-shadow(0 0 24px #7fdcff45);z-index:1;pointer-events:none}
+.hero-copy{z-index:3}.hero-copy:before{content:"♛";display:block;width:max-content;margin-bottom:2px;color:#d7a13a;font-size:25px;text-shadow:0 0 18px #d7a13a}
+.hero-magic{z-index:4;width:205px;height:205px}.hero-magic:before{border-color:#ffdc7d80;box-shadow:0 0 0 7px #7fdcff08,0 0 55px #d7a13a33}
+.quick-card{background:radial-gradient(circle at 85% 20%,#32135c25,transparent 35%),linear-gradient(145deg,#151019,#070a10)}
+.quick-card:after{content:"";position:absolute;right:-28px;bottom:-32px;width:105px;height:105px;background:url('/assets/aurexa-crystal.svg') center/contain no-repeat;opacity:.18}
+.banner{background:radial-gradient(circle at 78% 50%,#7a162d66,transparent 27%),radial-gradient(circle at 10% 50%,#41206b2b,transparent 28%),linear-gradient(90deg,#13090f,#080b12)}
+.banner:after{content:"♛  ◇  ✦  ◆  ✦  ◇  ♛";position:absolute;right:22px;top:50%;transform:translateY(-50%);font:700 22px Cinzel;color:#d7a13a66;letter-spacing:10px}
+.profile-panel:after{content:"";position:absolute;right:-34px;top:92px;width:120px;height:120px;background:url('/assets/aurexa-crown.svg') center/contain no-repeat;opacity:.10;transform:rotate(-8deg)}
+.avatar-big{position:relative}.avatar-big:after{content:"♛";position:absolute;right:-7px;bottom:-5px;font-size:15px;color:#d7a13a;text-shadow:0 0 12px #d7a13a}
+.mine-card{min-height:500px;background:radial-gradient(circle at 50% 35%,#72183266,transparent 27%),radial-gradient(circle at 50% 70%,#087db755,transparent 28%),linear-gradient(145deg,#130910,#05090f);overflow:hidden}
+.mine-card:after{content:"";position:absolute;inset:auto 50% -115px;transform:translateX(-50%);width:420px;height:420px;background:url('/assets/aurexa-crystal.svg') center/contain no-repeat;opacity:.13;filter:drop-shadow(0 0 30px #45d8ff)}
+.mine-core{position:relative;z-index:2;font-size:115px;text-shadow:0 0 15px #fff,0 0 42px #52caff,0 0 90px #177dff,0 0 120px #d51f4266}
+.wallet-main{background:radial-gradient(circle at 50% 42%,#0d729c55,transparent 30%),radial-gradient(circle at 50% 100%,#72183233,transparent 45%),linear-gradient(145deg,#090c14,#160910)}
+.wallet-main:after{content:"";position:absolute;right:4%;top:18%;width:160px;height:190px;background:url('/assets/aurexa-crystal.svg') center/contain no-repeat;opacity:.18;filter:drop-shadow(0 0 28px #6bdcff)}
+.product{overflow:hidden}.product:after{content:"◇";position:absolute;right:-10px;bottom:-24px;font-size:120px;color:#61d9ff18;text-shadow:0 0 30px #5ad7ff}
+.product:nth-child(2){box-shadow:0 0 0 1px #d51f4240,0 18px 55px #d51f4217}
+.product-icon{position:relative;text-shadow:0 0 10px #fff,0 0 28px #53cfff,0 0 50px #247cff}
+.profile-card{background:radial-gradient(circle at 50% 0,#711a3266,transparent 34%),radial-gradient(circle at 50% 100%,#3c1b6722,transparent 35%),#080b12}
+.profile-card:after{content:"";position:absolute;left:50%;top:-30px;transform:translateX(-50%);width:210px;height:125px;background:url('/assets/aurexa-crown.svg') center/contain no-repeat;opacity:.16;pointer-events:none}
+.notice:after{content:"✦  ◇  ✦";position:absolute;right:16px;bottom:10px;color:#7fdcff36;font-size:18px;letter-spacing:7px}
+.primary,.gold{position:relative;overflow:hidden}.primary:after,.gold:after{content:"";position:absolute;top:-50%;left:-35%;width:20%;height:200%;transform:rotate(25deg);background:#fff9;animation:fantasySheen 4.5s ease-in-out infinite}
+@keyframes fantasySheen{0%,60%{left:-35%;opacity:0}68%{opacity:.55}78%,100%{left:130%;opacity:0}}
+@media(max-width:800px){.hero-card{min-height:520px;padding:28px 22px;align-items:flex-start}.hero-card:after{right:-18%;bottom:-3%;width:82%;height:68%;opacity:.8}.hero-magic{position:absolute;right:10px;bottom:48px;width:125px;height:125px}.hero-copy{max-width:88%}.wallet-main:after{right:-20px;opacity:.12}.banner:after{display:none}.mine-card{min-height:460px}}
+@media(max-width:430px){header{padding:0 12px;gap:8px}header>small{display:none}.hero-card{min-height:540px}.hero-card:after{right:-35%;width:105%;height:64%}.hero-magic{right:8px;bottom:46px;width:105px;height:105px}.quick-card{min-height:165px}}
