@@ -1,242 +1,37 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js';
-import {
-  getAuth,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  sendEmailVerification,
-  sendPasswordResetEmail,
-  signOut,
-  reload,
-} from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js';
+import { getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut,reload } from 'https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js';
 
-const firebaseConfig = {
-  apiKey: atob('QUl6YVN5QmtWLUd0bTUyQXBITGpiS1o4VU0zV1NXcWNyaGZaVFVR'),
-  authDomain: 'aurexa-a7b3e.firebaseapp.com',
-  projectId: 'aurexa-a7b3e',
-  storageBucket: 'aurexa-a7b3e.firebasestorage.app',
-  messagingSenderId: '709158763308',
-  appId: '1:709158763308:web:382c2823908c0e07848a89',
-};
-
-const auth = getAuth(initializeApp(firebaseConfig));
-const API = 'https://aurexa-v3-staging.onrender.com';
-const CREATOR_EMAIL = 'nunezyenis05@gmail.com';
-let busy = false;
-let signupMode = false;
-let currentMe = null;
-let catalog = [];
-let page = 'home';
-
-const $ = (selector) => document.querySelector(selector);
-const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
-  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-}[char]));
-
-function authMessage(error) {
-  const code = String(error?.code || '').replace(/^auth\//, '');
-  const messages = {
-    'invalid-credential': 'Correo o contraseña incorrectos.',
-    'wrong-password': 'Correo o contraseña incorrectos.',
-    'user-not-found': 'No existe una cuenta con ese correo.',
-    'invalid-email': 'El correo electrónico no es válido.',
-    'too-many-requests': 'Demasiados intentos. Espera unos minutos.',
-    'email-already-in-use': 'Ese correo ya tiene una cuenta.',
-    'weak-password': 'La contraseña debe tener al menos 8 caracteres.',
-    'operation-not-allowed': 'El acceso por correo no está habilitado en Firebase.',
-    'user-disabled': 'Esta cuenta está deshabilitada.',
-  };
-  return messages[code] || error?.message || 'No se pudo completar la operación.';
-}
-
-function newIdempotencyKey() {
-  return crypto.randomUUID();
-}
-
-async function api(path, options = {}) {
-  const user = auth.currentUser;
-  const token = user ? await user.getIdToken(true) : null;
-  const headers = new Headers(options.headers || {});
-  headers.set('Accept', 'application/json');
-  if (options.body !== undefined) headers.set('Content-Type', 'application/json');
-  if (token) headers.set('Authorization', `Bearer ${token}`);
-  const response = await fetch(`${API}${path}`, { ...options, headers });
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const message = body?.error?.message || body?.error || body?.message || `HTTP ${response.status}`;
-    const error = new Error(message);
-    error.status = response.status;
-    error.payload = body;
-    throw error;
-  }
-  return body;
-}
-
-async function loadMeAndCatalog() {
-  const meResponse = await api('/api/v2/me');
-  currentMe = meResponse.data || {};
-  try {
-    const catalogResponse = await api('/api/v2/catalog');
-    catalog = catalogResponse.data?.items || [];
-  } catch {
-    catalog = [];
-  }
-}
-
-function authScreen(message = '') {
-  document.body.innerHTML = `
-    <main class="auth"><section class="card">
-      <h1>◆ AUREXA</h1><p>Beta pública · minería de diamantes virtuales</p>
-      <div class="tabs"><button id="loginTab">Entrar</button><button id="signupTab">Crear cuenta</button></div>
-      <form id="authForm">
-        <input id="email" type="email" required autocomplete="email" placeholder="Correo electrónico">
-        <input id="password" type="password" required minlength="8" autocomplete="current-password" placeholder="Contraseña">
-        <button class="gold" id="submitAuth" type="submit">${signupMode ? 'Crear cuenta' : 'Entrar'}</button>
-        <div id="authMessage">${message ? `<p class="error">${esc(message)}</p>` : ''}</div>
-        <button type="button" class="linkbtn" id="resetPassword">Restablecer contraseña</button>
-        <button type="button" class="linkbtn" id="resendVerification">Reenviar verificación</button>
-      </form>
-    </section></main>`;
-
-  $('#loginTab').onclick = () => { signupMode = false; authScreen(); };
-  $('#signupTab').onclick = () => { signupMode = true; authScreen(); };
-  $('#resetPassword').onclick = resetPassword;
-  $('#resendVerification').onclick = resendVerification;
-  $('#authForm').onsubmit = submitAuth;
-}
-
-async function resetPassword() {
-  const email = $('#email')?.value.trim();
-  if (!email) { $('#authMessage').innerHTML = '<p class="error">Escribe primero tu correo.</p>'; return; }
-  try {
-    await sendPasswordResetEmail(auth, email);
-    $('#authMessage').innerHTML = '<p class="ok">Si existe una cuenta, recibirás instrucciones por correo.</p>';
-  } catch (error) {
-    $('#authMessage').innerHTML = `<p class="error">${esc(authMessage(error))}</p>`;
-  }
-}
-
-async function resendVerification() {
-  const user = auth.currentUser;
-  if (!user) { $('#authMessage').innerHTML = '<p class="error">Inicia sesión para reenviar la verificación.</p>'; return; }
-  try {
-    await sendEmailVerification(user, { url: `${location.origin}/?verified=1`, handleCodeInApp: false });
-    $('#authMessage').innerHTML = '<p class="ok">Correo de verificación reenviado.</p>';
-  } catch (error) {
-    $('#authMessage').innerHTML = `<p class="error">${esc(authMessage(error))}</p>`;
-  }
-}
-
-async function submitAuth(event) {
-  event.preventDefault();
-  if (busy) return;
-  busy = true;
-  const message = $('#authMessage');
-  try {
-    const email = $('#email').value.trim();
-    const password = $('#password').value;
-    if (signupMode) {
-      const result = await createUserWithEmailAndPassword(auth, email, password);
-      await sendEmailVerification(result.user, { url: `${location.origin}/?verified=1`, handleCodeInApp: false });
-      await signOut(auth);
-      message.innerHTML = '<p class="ok">Cuenta creada. Revisa tu correo y verifícala antes de entrar.</p>';
-      return;
-    }
-    const result = await signInWithEmailAndPassword(auth, email, password);
-    await reload(result.user);
-    if (!result.user.emailVerified) {
-      await signOut(auth);
-      message.innerHTML = '<p class="error">Debes verificar tu correo antes de entrar.</p>';
-      return;
-    }
-    await result.user.getIdToken(true);
-    await loadMeAndCatalog();
-    renderShell();
-    await renderPage();
-  } catch (error) {
-    message.innerHTML = `<p class="error">${esc(authMessage(error))}</p>`;
-  } finally {
-    busy = false;
-  }
-}
-
-function renderShell() {
-  document.body.innerHTML = `
-    <div class="app"><header><b>◆ AUREXA</b><small>BETA PÚBLICA</small><button id="logout">Salir</button></header>
-    <div class="layout"><nav>
-      ${[['home', 'Inicio'], ['packages', 'Paquetes'], ['mining', 'Minería'], ['payments', 'Pagos'], ['withdrawals', 'Retiros'], ['history', 'Historial'], ['creator', 'Creadora']].map(([key, label]) => `<button data-page="${key}">${label}</button>`).join('')}
-    </nav><main id="view"></main></div></div>`;
-  document.querySelectorAll('[data-page]').forEach((button) => {
-    button.onclick = async () => { page = button.dataset.page; await renderPage(); };
-  });
-  $('#logout').onclick = () => signOut(auth);
-}
-
-function card(title, body) { return `<section class="card"><h2>${title}</h2>${body}</section>`; }
-function homePage() {
-  const profile = currentMe?.profile || {};
-  const wallet = currentMe?.wallet || {};
-  return card('Cuenta', `<p><b>${esc(auth.currentUser?.email)}</b></p><p>Usuario: ${esc(profile.username || '')}</p><p>Plan: ${esc(profile.mining_plan || 'Sin plan')}</p>`)
-    + card('Billetera', `<div class="big">◆ ${Number(wallet.diamonds || 0).toLocaleString()}</div><p>Los diamantes se gestionan en el backend.</p>`);
-}
-function packagesPage() {
-  return card('Paquetes', `<div class="grid">${catalog.map((item) => `<article class="card"><h3>${esc(item.name || item.code)}</h3><p>${esc(item.cup ?? item.priceMinor ?? '')} CUP · ◆ ${esc(item.diamonds ?? item.quantity ?? '')}</p><button class="gold" data-buy="${esc(item.code)}">Comprar</button></article>`).join('') || '<p>Catálogo no disponible.</p>'}</div>`);
-}
-function miningPage() { return card('Minería', '<p>La recompensa la determina el servidor.</p><button class="gold" id="mine">Minar ahora</button><div id="result"></div>'); }
-function paymentsPage() { return card('Solicitud de compra', `<div class="form"><select id="pkg">${catalog.map((p) => `<option value="${esc(p.code)}">${esc(p.name || p.code)}</option>`).join('')}</select><input id="ref" placeholder="Referencia del pago"><button class="gold" id="request">Registrar solicitud</button><div id="result"></div></div>`); }
-function withdrawalsPage() { return card('Retiros', `<p>Saldo: ◆ ${Number(currentMe?.wallet?.diamonds || 0).toLocaleString()}</p><div class="form"><input id="amount" type="number" min="1" placeholder="Diamantes"><input id="destination" placeholder="Destino de pago"><button class="gold" id="withdraw">Solicitar retiro</button><div id="result"></div></div>`); }
-async function historyPage() {
-  const [purchases, transactions] = await Promise.all([api('/api/v2/purchases'), api('/api/v2/me/wallet/transactions')]);
-  return card('Historial', `<h3>Compras</h3>${(purchases.data || []).map((item) => `<p>${esc(item.status || '')} · ${esc(item.id || '')}</p>`).join('') || '<p>Sin compras.</p>'}<h3>Movimientos</h3>${(transactions.data || []).map((item) => `<p>${esc(item.entry_type || item.type || '')} · ${esc(item.amount || '')}</p>`).join('') || '<p>Sin movimientos.</p>'}`);
-}
-async function creatorPage() {
-  if ((auth.currentUser?.email || '').toLowerCase() !== CREATOR_EMAIL) return card('Creadora', '<p>Acceso restringido.</p>');
-  return card('Creadora', '<p>Panel administrativo sujeto a autorización server-side.</p>');
-}
-
-async function renderPage() {
-  const view = $('#view');
-  if (!view) return;
-  try {
-    const content = page === 'home' ? homePage() : page === 'packages' ? packagesPage() : page === 'mining' ? miningPage() : page === 'payments' ? paymentsPage() : page === 'withdrawals' ? withdrawalsPage() : page === 'history' ? await historyPage() : await creatorPage();
-    view.innerHTML = content;
-    bindPage();
-  } catch (error) {
-    view.innerHTML = card('Error', `<p class="error">${esc(error.message)}</p><button id="retry">Reintentar</button>`);
-    $('#retry').onclick = renderPage;
-  }
-}
-
-function bindPage() {
-  $('#mine')?.addEventListener('click', async () => {
-    try { await api('/api/v2/mine', { method: 'POST', headers: { 'Idempotency-Key': newIdempotencyKey() } }); $('#result').innerHTML = '<p class="ok">Solicitud enviada.</p>'; }
-    catch (error) { $('#result').innerHTML = `<p class="error">${esc(error.message)}</p>`; }
-  });
-  $('#request')?.addEventListener('click', async () => {
-    try {
-      const response = await api('/api/v2/purchases', { method: 'POST', headers: { 'Idempotency-Key': newIdempotencyKey() }, body: JSON.stringify({ catalogCode: $('#pkg')?.value, paymentReference: $('#ref')?.value.trim() }) });
-      $('#result').innerHTML = `<p class="ok">Solicitud creada: ${esc(response.data?.id || 'OK')}</p>`;
-    } catch (error) { $('#result').innerHTML = `<p class="error">${esc(error.message)}</p>`; }
-  });
-  $('#withdraw')?.addEventListener('click', async () => {
-    try {
-      const amount = Number($('#amount')?.value);
-      if (!Number.isInteger(amount) || amount <= 0) throw new Error('La cantidad debe ser un entero positivo.');
-      const response = await api('/api/v2/withdrawals', { method: 'POST', headers: { 'Idempotency-Key': newIdempotencyKey() }, body: JSON.stringify({ amount, destination: $('#destination')?.value.trim() }) });
-      $('#result').innerHTML = `<p class="ok">Solicitud creada: ${esc(response.data?.id || 'OK')}</p>`;
-    } catch (error) { $('#result').innerHTML = `<p class="error">${esc(error.message)}</p>`; }
-  });
-}
-
-onAuthStateChanged(auth, async (user) => {
-  if (busy) return;
-  if (!user) { authScreen(); return; }
-  try { await reload(user); } catch { /* Firebase mantiene el estado local; el backend volverá a validar el token. */ }
-  if (!auth.currentUser?.emailVerified) { authScreen('Verifica tu correo electrónico antes de entrar.'); return; }
-  try {
-    await auth.currentUser.getIdToken(true);
-    await loadMeAndCatalog();
-    renderShell();
-    await renderPage();
-  } catch (error) { authScreen(error.message); }
-});
+const firebaseConfig={apiKey:atob('QUl6YVN5QmtWLUd0bTUyQXBITGpiS1o4VU0zV1NXcWNyaGZaVFVR'),authDomain:'aurexa-a7b3e.firebaseapp.com',projectId:'aurexa-a7b3e',storageBucket:'aurexa-a7b3e.firebasestorage.app',messagingSenderId:'709158763308',appId:'1:709158763308:web:382c2823908c0e07848a89'};
+const auth=getAuth(initializeApp(firebaseConfig));
+const API='https://aurexa-v3-staging.onrender.com';
+const CREATOR_EMAIL='nunezyenis05@gmail.com';
+let busy=false,signupMode=false,currentMe={},catalog=[],page='home',supportInfo=null;
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const idempotency=()=>crypto.randomUUID();
+function authMessage(e){const c=String(e?.code||'').replace(/^auth\//,'');return({'invalid-credential':'Correo o contraseña incorrectos.','wrong-password':'Correo o contraseña incorrectos.','user-not-found':'No existe una cuenta con ese correo.','invalid-email':'El correo no es válido.','too-many-requests':'Demasiados intentos. Espera unos minutos.','email-already-in-use':'Ese correo ya tiene una cuenta.','weak-password':'La contraseña debe tener al menos 8 caracteres.','operation-not-allowed':'El acceso por correo no está habilitado.','user-disabled':'Esta cuenta está deshabilitada.'}[c]||e?.message||'No se pudo completar la operación.');}
+async function api(path,options={}){const u=auth.currentUser;const h=new Headers(options.headers||{});h.set('Accept','application/json');if(options.body!==undefined)h.set('Content-Type','application/json');if(u)h.set('Authorization',`Bearer ${await u.getIdToken(true)}`);const r=await fetch(API+path,{...options,headers:h});const b=await r.json().catch(()=>({}));if(!r.ok){const e=new Error(b?.error?.message||b?.error||b?.message||`HTTP ${r.status}`);e.status=r.status;e.payload=b;throw e;}return b;}
+async function loadData(){currentMe=(await api('/api/v2/me')).data||{};try{catalog=(await api('/api/v2/catalog')).data?.items||[]}catch{catalog=[]}try{supportInfo=(await api('/api/v2/contact')).data||null}catch{supportInfo=null}}
+function authScreen(msg=''){document.body.innerHTML=`<main class="auth"><section class="auth-card"><div class="logo">♛</div><h1>AUREXA</h1><p>MINA · JUEGA · GANA</p><div class="tabs"><button id="loginTab" class="${signupMode?'':'active'}">Iniciar sesión</button><button id="signupTab" class="${signupMode?'active':''}">Crear cuenta</button></div><form id="authForm"><label>Correo electrónico<input id="email" type="email" required autocomplete="email" placeholder="tu@email.com"></label><label>Contraseña<input id="password" type="password" required minlength="8" autocomplete="current-password" placeholder="••••••••"></label><button class="gold wide" type="submit">${signupMode?'CREAR CUENTA':'INICIAR SESIÓN'}</button><div id="authMessage">${msg?`<p class="error">${esc(msg)}</p>`:''}</div><div class="auth-links"><button type="button" id="resetPassword">¿Olvidaste tu contraseña?</button><button type="button" id="resendVerification">Reenviar verificación</button></div></form></section></main>`;$('#loginTab').onclick=()=>{signupMode=false;authScreen()};$('#signupTab').onclick=()=>{signupMode=true;authScreen()};$('#resetPassword').onclick=resetPassword;$('#resendVerification').onclick=resendVerification;$('#authForm').onsubmit=submitAuth;}
+async function resetPassword(){const email=$('#email')?.value.trim();if(!email){$('#authMessage').innerHTML='<p class="error">Escribe primero tu correo.</p>';return}try{await sendPasswordResetEmail(auth,email);$('#authMessage').innerHTML='<p class="ok">Si existe una cuenta, recibirás instrucciones por correo.</p>'}catch(e){$('#authMessage').innerHTML=`<p class="error">${esc(authMessage(e))}</p>`}}
+async function resendVerification(){if(!auth.currentUser){$('#authMessage').innerHTML='<p class="error">Inicia sesión para reenviar la verificación.</p>';return}try{await sendEmailVerification(auth.currentUser,{url:location.origin+'/?verified=1',handleCodeInApp:false});$('#authMessage').innerHTML='<p class="ok">Correo reenviado.</p>'}catch(e){$('#authMessage').innerHTML=`<p class="error">${esc(authMessage(e))}</p>`}}
+async function submitAuth(e){e.preventDefault();if(busy)return;busy=true;const box=$('#authMessage');try{const email=$('#email').value.trim(),password=$('#password').value;if(signupMode){const r=await createUserWithEmailAndPassword(auth,email,password);await sendEmailVerification(r.user,{url:location.origin+'/?verified=1',handleCodeInApp:false});await signOut(auth);box.innerHTML='<p class="ok">Cuenta creada. Verifica tu correo antes de entrar.</p>';return}const r=await signInWithEmailAndPassword(auth,email,password);await reload(r.user);if(!r.user.emailVerified){await signOut(auth);box.innerHTML='<p class="error">Debes verificar tu correo antes de entrar.</p>';return}await loadData();renderShell();await renderPage()}catch(e){box.innerHTML=`<p class="error">${esc(authMessage(e))}</p>`}finally{busy=false}}
+const icon={home:'⌂',mining:'⚒',wallet:'◇',packages:'◈',history:'▤',profile:'♙',support:'?',settings:'⚙',notifications:'♢',creator:'♛'};
+function renderShell(){document.body.innerHTML=`<div class="app"><header><button class="mobile-menu" id="openMenu">☰</button><b>♛ AUREXA</b><small>REINO DE DIAMANTES</small><div class="top-right"><button data-page="notifications">♢</button><button data-page="profile" class="avatar">♙</button><button id="logout">Salir</button></div></header><div class="layout"><nav id="side"><div class="side-title">REINO</div>${[['home','Inicio'],['mining','Minería'],['wallet','Wallet'],['packages','Comprar diamantes'],['history','Historial'],['profile','Perfil'],['support','Soporte'],['settings','Configuración']].map(([k,l])=>`<button data-page="${k}">${icon[k]}<span>${l}</span></button>`).join('')}<div class="side-title second">CUENTA</div><button data-page="notifications">${icon.notifications}<span>Notificaciones</span></button>${(auth.currentUser?.email||'').toLowerCase()===CREATOR_EMAIL?`<button data-page="creator">${icon.creator}<span>Panel creadora</span></button>`:''}</nav><main id="view"></main></div><div class="bottom">${[['home','Inicio'],['mining','Minar'],['wallet','Wallet'],['packages','Comprar'],['profile','Perfil']].map(([k,l])=>`<button data-page="${k}"><b>${icon[k]}</b><span>${l}</span></button>`).join('')}</div></div>`;document.querySelectorAll('[data-page]').forEach(b=>b.onclick=async()=>{page=b.dataset.page;$('#side')?.classList.remove('open');await renderPage()});$('#logout').onclick=()=>signOut(auth);$('#openMenu').onclick=()=>$('#side').classList.toggle('open')}
+function head(k,t,p=''){return `<div class="page-head"><div class="eyebrow">${esc(k)}</div><h1>${t}</h1>${p?`<p>${p}</p>`:''}</div>`}
+function panel(t,b,c='card'){return `<section class="${c}"><div class="card-title"><h3>${t}</h3></div>${b}</section>`}
+function homePage(){const p=currentMe.profile||{},w=currentMe.wallet||{};const diamonds=Number(w.diamonds||0),energy=Number(w.energy??100),max=Number(w.max_energy??100),xp=Number(p.xp||245),level=Number(p.level||3);return head('REINO DE DIAMANTES','Bienvenida, '+esc(p.username||'LunaLoss'),'Tu aventura comienza aquí.')+`<section class="hero-card"><div><span class="pill">NIVEL ${level} · EXPLORADOR</span><h2>Tu reino.<br><b>Tus diamantes.</b></h2><p>Explora, mina y construye tu fortuna virtual dentro de AUREXA.</p><div class="actions"><button class="primary" data-page="mining">MINAR AHORA</button><button class="secondary" data-page="packages">COMPRAR DIAMANTES</button></div></div><div class="hero-orb">◇<small>DIAMANTE</small></div></section><div class="stats-grid"><div class="stat"><span>DIAMANTES</span><b>◆ ${diamonds.toLocaleString()}</b><small>Saldo disponible</small></div><div class="stat"><span>ENERGÍA</span><b>⚡ ${energy}</b><div class="bar"><i style="width:${Math.min(100,energy/Math.max(1,max)*100)}%"></i></div></div><div class="stat"><span>PROGRESO</span><b>Lv. ${level}</b><small>${xp} / 500 XP</small><div class="bar"><i style="width:${Math.min(100,xp/5)}%"></i></div></div></div><div class="quick"><button data-page="mining"><b>⚒</b><span><strong>Minería</strong><small>Extrae diamantes</small></span>›</button><button data-page="wallet"><b>◇</b><span><strong>Wallet</strong><small>Consulta tu saldo</small></span>›</button><button data-page="profile"><b>♙</b><span><strong>Tu perfil</strong><small>Logros y estadísticas</small></span>›</button></div>`}
+async function miningPage(){let sessions=[];try{sessions=(await api('/api/v2/mining')).data||[]}catch{}return head('MINERÍA','La mina de AUREXA','La producción y el tiempo son determinados por el servidor.')+`<section class="mine-card"><div class="mine-core">◇</div><span class="pill">MINA DE CRISTAL · NIVEL 2</span><h2>+10 ◆ / hora</h2><p>Sesión de prueba · recompensa calculada en servidor</p><button class="primary bigbtn" id="mine">INICIAR MINERÍA</button><div id="mineResult"></div></section>`+panel('Mis sesiones',sessions.length?sessions.slice(0,5).map(s=>`<div class="row"><span>${esc(s.status||'Sesión')}</span><b>${esc(s.reward_diamonds??s.reward??0)} ◆</b><small>${esc(s.started_at||'')}</small></div>`).join(''):'<p class="empty">Todavía no tienes sesiones. Inicia tu primera minería.</p>')}
+function walletPage(){const w=currentMe.wallet||{};return head('WALLET','Tesoro de diamantes','Tus activos virtuales dentro de AUREXA.')+`<section class="wallet-main"><span>DIAMANTES DISPONIBLES</span><strong>◆ ${Number(w.diamonds||0).toLocaleString()}</strong><p>≈ saldo virtual · sin valor monetario</p><div class="wallet-actions"><button class="primary" data-page="packages">COMPRAR</button><button class="secondary" data-page="history">MOVIMIENTOS</button></div></section>`+panel('Resumen','<div class="row"><span>Monedas</span><b>◈ '+Number(w.coins||0).toLocaleString()+'</b></div><div class="row"><span>Cristales</span><b>◇ '+Number(w.crystals||0).toLocaleString()+'</b></div><div class="row"><span>Puntos</span><b>'+Number(w.points||0).toLocaleString()+'</b></div>')+`<div class="notice"><b>✦ Economía virtual</b><p>Los diamantes solo existen dentro de la aplicación y no pueden retirarse, convertirse ni canjearse por dinero real.</p></div>`}
+function packagesPage(){const items=catalog.length?catalog:[{code:'starter',name:'500 Diamantes',diamonds:500,cup:5000},{code:'hunter',name:'1,000 Diamantes',diamonds:1000,cup:9500},{code:'royal',name:'2,500 Diamantes',diamonds:2500,cup:22000},{code:'legend',name:'5,000 Diamantes',diamonds:5000,cup:42000}];return head('MERCADO','Comprar diamantes','Selecciona tu paquete y continúa por WhatsApp cuando esté configurado.')+`<div class="products">${items.map((p,i)=>`<article class="product">${i===1?'<em>MÁS POPULAR</em>':''}<span class="product-icon">◇</span><h3>${esc(p.name||p.code)}</h3><strong>◆ ${Number(p.diamonds??p.quantity??0).toLocaleString()}</strong><p>Diamantes virtuales</p><div class="price">${Number(p.cup??p.priceMinor??0).toLocaleString()} <small>CUP</small></div><button class="primary wide" data-buy="${esc(p.code)}">COMPRAR POR WHATSAPP</button></article>`).join('')}</div><div class="notice"><b>Pago manual</b><p>El pago se coordina por WhatsApp. La acreditación de diamantes se realiza únicamente después de la aprobación correspondiente.</p></div>`}
+async function historyPage(){let a=[],b=[];try{[a,b]=await Promise.all([(api('/api/v2/purchases').then(x=>x.data||[])),(api('/api/v2/me/wallet/transactions').then(x=>x.data||[]))])}catch{}return head('HISTORIAL','Tus movimientos','Consulta compras, recompensas y transferencias.')+panel('Actividad',b.length?b.slice(0,12).map(x=>`<div class="row"><span>${esc(x.entry_type||x.type||'Movimiento')}</span><b>${esc(x.amount??'')} ◆</b><small>${esc(x.created_at||x.createdAt||'')}</small></div>`).join(''):'<p class="empty">Aún no hay movimientos.</p>')+panel('Compras',a.length?a.slice(0,8).map(x=>`<div class="row"><span>${esc(x.status||'Solicitud')}</span><b>${esc(x.id||'')}</b></div>`).join(''):'<p class="empty">Aún no hay compras.</p>')}
+function profilePage(){const p=currentMe.profile||{},w=currentMe.wallet||{};return head('JUGADOR','Perfil de jugador','Tu identidad dentro del reino.')+`<section class="profile-card"><div class="profile-avatar">${esc((p.username||'L').slice(0,1).toUpperCase())}</div><h2>${esc(p.username||'LunaLoss')}</h2><p>ID: ${esc(p.id||'—')}</p><span class="pill">NIVEL ${Number(p.level||3)} · EXPLORADOR</span><div class="stats-grid"><div class="stat"><span>DIAMANTES</span><b>${Number(w.diamonds||0).toLocaleString()}</b></div><div class="stat"><span>SESIONES</span><b>${Number(p.mining_sessions||0)}</b></div><div class="stat"><span>COMPRAS</span><b>${Number(p.purchases||0)}</b></div></div></section>`+panel('Logros','<div class="quick"><button><b>✧</b><span><strong>Primeros pasos</strong><small>Explorador iniciado</small></span></button><button><b>✦</b><span><strong>Minero activo</strong><small>Primera sesión</small></span></button><button><b>♛</b><span><strong>Reino AUREXA</strong><small>Tu aventura</small></span></button></div>')}
+function supportPage(){return head('AYUDA','Soporte','Estamos aquí para ayudarte dentro del reino.')+`<div class="support-grid"><article class="support-card"><b>?</b><h3>Preguntas frecuentes</h3><p>Resuelve dudas sobre minería, compras y wallet.</p><strong>VER AYUDA ›</strong></article><article class="support-card"><b>◌</b><h3>Chat de soporte</h3><p>Contacta con el equipo para incidencias.</p><strong>RESPONDEMOS PRONTO ›</strong></article><article class="support-card"><b>◇</b><h3>Problemas con compras</h3><p>Ayuda con referencias y acreditaciones.</p><strong>REVISAR COMPRA ›</strong></article><article class="support-card"><b>⚒</b><h3>Problemas con minería</h3><p>Revisamos sesiones y recompensas.</p><strong>REVISAR MINERÍA ›</strong></article></div><div class="card"><button class="primary wide" id="supportWhatsApp">CONTACTAR POR WHATSAPP</button><div id="supportResult"></div></div>`}
+function settingsPage(){const u=auth.currentUser,p=currentMe.profile||{};return head('CUENTA','Configuración','Privacidad, seguridad y preferencias.')+`<div class="settings-list"><div class="setting"><b>Correo electrónico</b><span>${esc(u?.email||'')}</span></div><div class="setting"><b>Verificación</b><span class="green">Verificado</span></div><div class="setting"><b>Notificaciones</b><button class="toggle">ACTIVADAS</button></div><div class="setting"><b>Tema</b><span>Gótico oscuro</span></div><div class="setting"><b>Sonido</b><button class="toggle">ACTIVADO</button></div><div class="setting"><b>Términos y condiciones</b><span>›</span></div><div class="setting"><b>Privacidad</b><span>›</span></div></div><div class="card"><button class="danger" id="settingsLogout">Cerrar sesión</button></div>`}
+function notificationsPage(){return head('AVISOS','Notificaciones','Novedades de tu reino.')+panel('Centro de actividad','<div class="row"><span>✦ Bienvenido a AUREXA</span><b>Nuevo</b><small>Tu aventura virtual comienza aquí.</small></div><div class="row"><span>⚒ Minería</span><b>Activo</b><small>Las recompensas son calculadas por el servidor.</small></div><div class="row"><span>◇ Wallet</span><b>Activo</b><small>Consulta tus diamantes y movimientos.</small></div>')}
+async function creatorPage(){if((auth.currentUser?.email||'').toLowerCase()!==CREATOR_EMAIL)return head('CUENTA','Panel restringido')+panel('Acceso','<p>Esta sección está reservada para la creadora.</p>');return head('ADMINISTRACIÓN','Panel de la creadora','Operaciones sensibles permanecen protegidas en el servidor.')+panel('Estado','<div class="row"><span>Autenticación</span><b>Firebase</b></div><div class="row"><span>Economía</span><b>Servidor</b></div><div class="row"><span>Telegram</span><b>Servidor</b></div>')}
+async function renderPage(){const v=$('#view');if(!v)return;try{let c=page==='home'?homePage():page==='mining'?await miningPage():page==='wallet'?walletPage():page==='packages'?packagesPage():page==='history'?await historyPage():page==='profile'?profilePage():page==='support'?supportPage():page==='settings'?settingsPage():page==='notifications'?notificationsPage():await creatorPage();v.innerHTML=c;bindPage();}catch(e){v.innerHTML=panel('Error',`<p class="error">${esc(e.message)}</p><button class="secondary" id="retry">REINTENTAR</button>`);$('#retry').onclick=renderPage}}
+async function buy(code){try{const r=supportInfo||await api('/api/v2/contact');const url=r?.data?.whatsappUrl||r?.whatsappUrl;if(!url||url==='https://wa.me/'){toast('WhatsApp todavía no está configurado en el servidor.',true);return}const p=catalog.find(x=>x.code===code);const text=`Hola, quiero comprar ${p?.name||code} en AUREXA.`;window.open(url+'?text='+encodeURIComponent(text),'_blank','noopener');}catch(e){toast('No se pudo abrir WhatsApp: '+e.message,true)}}
+function toast(t,err=false){const d=document.createElement('div');d.className='toast'+(err?' err':'');d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),4200)}
+function bindPage(){document.querySelectorAll('[data-page]').forEach(b=>b.onclick=async()=>{page=b.dataset.page;await renderPage()});document.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>buy(b.dataset.buy));$('#mine')?.addEventListener('click',async()=>{const box=$('#mineResult');try{const r=await api('/api/v2/mine',{method:'POST',headers:{'Idempotency-Key':idempotency()}});box.innerHTML=`<p class="ok">${esc(r.data?.decision||'Solicitud procesada')}. El servidor controla la sesión.</p>`;await loadData()}catch(e){box.innerHTML=`<p class="error">${esc(e.message)}</p>`}});$('#supportWhatsApp')?.addEventListener('click',()=>buy('support'));$('#settingsLogout')?.addEventListener('click',()=>signOut(auth))}
+onAuthStateChanged(auth,async user=>{if(busy)return;if(!user){authScreen();return}try{await reload(user)}catch{}if(!auth.currentUser?.emailVerified){authScreen('Verifica tu correo electrónico antes de entrar.');return}try{await loadData();renderShell();await renderPage()}catch(e){authScreen(e.message)}});
