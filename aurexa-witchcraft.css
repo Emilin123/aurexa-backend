@@ -1,0 +1,99 @@
+/* AUREXA — WITCHCRAFT / GOTHIC FANTASY VISUAL PASS
+   Visual-only layer. No application logic, API, auth or economy changes. */
+:root{
+  --witch-bg:#03040a;--witch-night:#070918;--witch-panel:#0b0d1b;--witch-panel2:#111329;
+  --witch-violet:#8d52ff;--witch-violet2:#c18cff;--witch-cyan:#52ddff;--witch-cyan2:#a9f3ff;
+  --witch-gold:#d7ae5b;--witch-gold2:#ffe8a8;--witch-ruby:#d83b67;--witch-text:#f4edff;
+}
+html,body{background:var(--witch-bg)!important;color:var(--witch-text)}
+body{background:radial-gradient(circle at 50% 0,#24103d 0,#080918 34%,#020308 78%)!important}
+body:before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;background:radial-gradient(circle at 18% 30%,#7e42ff16,transparent 23%),radial-gradient(circle at 82% 22%,#43dfff13,transparent 25%),radial-gradient(circle at 50% 100%,#c42e5b14,transparent 34%)}
+body:after{content:"✦  ◇  ✧  ◇  ✦  ☽  ✦  ◇  ✧";position:fixed;inset:auto 0 10px;text-align:center;z-index:999;pointer-events:none;color:#c18cff18;font:700 17px Cinzel,serif;letter-spacing:14px}
+.app{background:radial-gradient(circle at 50% -12%,#6c2e9b38,transparent 25%),radial-gradient(circle at 15% 75%,#145e8320,transparent 28%),linear-gradient(180deg,#04050d,#070817 45%,#03040a)!important}
+.app:before{opacity:.18;background-image:radial-gradient(#b98cff 1px,transparent 1px),radial-gradient(#57e3ff 1px,transparent 1px);background-size:71px 71px,113px 113px;mask-image:linear-gradient(#fff,transparent 88%)}
+.app:after{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.24;background:radial-gradient(circle at 10% 20%,#b05cff 0 1px,transparent 2px),radial-gradient(circle at 88% 34%,#5ce7ff 0 1px,transparent 2px);background-size:197px 197px,233px 233px;animation:witchDust 22s linear infinite}
+@keyframes witchDust{to{background-position:197px 120px,-233px 90px}}
+header{height:82px!important;background:linear-gradient(180deg,#03040bf5,#090a19ee)!important;border-bottom:1px solid #8d52ff50!important;box-shadow:0 8px 45px #000e,0 0 35px #8d52ff18!important}
+header:before{content:"☽";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:700 34px Georgia;color:#8d52ff18;text-shadow:0 0 22px #8d52ff}
+header:after{background:linear-gradient(90deg,transparent,#8d52ff,#c18cff,#52ddff,#d7ae5b,transparent)!important;box-shadow:0 0 18px #8d52ff!important}
+header>b,.brand strong{color:var(--witch-gold2)!important;text-shadow:0 0 18px #8d52ff55!important;letter-spacing:.16em!important}
+header>small,.brand span{color:#9d8db4!important}
+.top-right button,.mobile-menu{background:linear-gradient(145deg,#0a0c1b,#17102a)!important;border-color:#8d52ff55!important;color:#e7d9ff!important;box-shadow:inset 0 0 18px #8d52ff08,0 0 14px #0008}
+#side{width:255px!important;background:linear-gradient(180deg,#050611f7,#080918f2)!important;border-right:1px solid #8d52ff45!important;box-shadow:12px 0 45px #0009}
+.side-title{color:#766a8f!important;letter-spacing:.3em!important}
+#side>button{border-radius:10px!important;color:#9b91aa!important}
+#side>button:hover,#side>button.active{background:linear-gradient(90deg,#8d52ff18,#52ddff08)!important;border-color:#8d52ff45!important;color:#f4eaff!important;box-shadow:inset 3px 0 #8d52ff,0 0 18px #8d52ff0c}
+#side>button b{color:#b889ff!important;text-shadow:0 0 10px #8d52ff}
+#side .side-quote{border-left-color:#8d52ff!important;background:linear-gradient(90deg,#8d52ff16,transparent)!important;color:#81758f!important}
+#view{max-width:1320px!important;padding-top:40px!important}
+.page-head{position:relative;padding-left:19px;margin-bottom:26px!important}
+.page-head:before{content:"✦";position:absolute;left:0;top:4px;color:#c18cff;text-shadow:0 0 12px #8d52ff}
+.page-head:after{content:"";display:block;width:180px;height:1px;margin-top:13px;background:linear-gradient(90deg,#8d52ff,#52ddff,transparent);box-shadow:0 0 10px #8d52ff}
+.eyebrow{color:#b28cff!important;letter-spacing:.34em!important;text-shadow:0 0 12px #8d52ff55}
+.page-head h1{color:#ffe9b2!important;text-shadow:0 0 22px #8d52ff38!important}
+.page-head p{color:#958ba6!important}
+.hero-card,.profile-panel,.card,.mine-card,.wallet-main,.profile-card,.product,.notice,.support-card,.banner,.quick-card,.settings-list{
+ border-color:#8d52ff55!important;background:linear-gradient(145deg,#121027ee,#070916f5)!important;box-shadow:0 25px 75px #000d,0 0 0 1px #8d52ff0c,0 0 35px #8d52ff10!important
+}
+.hero-card:before,.profile-panel:before,.card:before,.mine-card:before,.wallet-main:before,.profile-card:before,.product:before,.notice:before,.support-card:before,.quick-card:before,.settings-list:before{border-color:#c18cff26!important}
+.hero-card,.mine-card,.wallet-main,.profile-card,.product,.quick-card,.banner,.notice{clip-path:polygon(18px 0,calc(100% - 18px) 0,100% 18px,100% calc(100% - 18px),calc(100% - 18px) 100%,18px 100%,0 calc(100% - 18px),0 18px)!important}
+.hero-card{min-height:445px!important;background:radial-gradient(circle at 78% 44%,#7b32b957,transparent 25%),radial-gradient(circle at 70% 85%,#0c92b045,transparent 27%),linear-gradient(135deg,#180c28,#050711)!important}
+.hero-card:after{filter:drop-shadow(0 0 28px #8d52ff77) drop-shadow(0 0 48px #52ddff33)!important}
+.hero-copy h2{color:#fff5e4!important;text-shadow:0 0 25px #8d52ff28!important}
+.hero-copy h2 strong{color:#ffe39b!important;text-shadow:0 0 20px #d7ae5b66!important}
+.hero-copy:before{content:"☽  ✦  ◇  ✦  ☾"!important;color:#b889ff!important;text-shadow:0 0 15px #8d52ff!important}
+.hero-magic{background:radial-gradient(circle,#f6ffff 0 4%,#71e7ff 5% 13%,#7252ff 21%,#27134b 47%,transparent 69%)!important;filter:drop-shadow(0 0 18px #52ddff) drop-shadow(0 0 70px #8d52ff)!important}
+.hero-magic:before{border-color:#d7ae5b80!important;box-shadow:0 0 0 8px #8d52ff0d,0 0 55px #8d52ff44!important}
+.quick-grid{gap:15px!important}
+.quick-card{background:radial-gradient(circle at 80% 18%,#8d52ff2d,transparent 32%),linear-gradient(145deg,#15112b,#060814)!important}
+.quick-card:after{filter:drop-shadow(0 0 24px #52ddff)!important;opacity:.42!important}
+.quick-card .big-icon,.big-icon{color:#bdf6ff!important;text-shadow:0 0 15px #52ddff,0 0 32px #8d52ff!important}
+.quick-card h3,.card h3{color:#f0e6ff!important}
+.profile-panel:after{filter:drop-shadow(0 0 20px #8d52ff)!important;opacity:.2!important}
+.avatar-big{background:radial-gradient(circle,#2a1551,#070817)!important;border-color:#c18cff!important;box-shadow:0 0 30px #8d52ff55!important;color:#ffe7a9!important}
+.xp i,.bar i{background:linear-gradient(90deg,#8d52ff,#52ddff,#ffe29a)!important;box-shadow:0 0 15px #8d52ff88!important}
+.stat{background:linear-gradient(145deg,#0b0d1e,#15102a)!important;border-color:#8d52ff26!important}
+.stat b{color:#f3eaff!important}
+.mine-card{background:radial-gradient(circle at 50% 30%,#702cb85c,transparent 28%),radial-gradient(circle at 50% 72%,#0088b94c,transparent 28%),linear-gradient(145deg,#110b20,#040711)!important}
+.mine-core{filter:drop-shadow(0 0 14px #fff) drop-shadow(0 0 35px #52ddff) drop-shadow(0 0 75px #8d52ff)!important}
+.mine-card h2{color:#ffe4a0!important;text-shadow:0 0 20px #8d52ff33}
+.wallet-main{background:radial-gradient(circle at 50% 38%,#0c83ad55,transparent 30%),radial-gradient(circle at 50% 100%,#7126a535,transparent 42%),linear-gradient(145deg,#070a18,#160a20)!important}
+.wallet-main>strong{color:#e9fbff!important;text-shadow:0 0 22px #52ddff99,0 0 50px #8d52ff55!important}
+.products{gap:17px!important}
+.product{background:radial-gradient(circle at 50% 20%,#173e6845,transparent 34%),linear-gradient(145deg,#15102a,#050811)!important}
+.product:nth-child(2){box-shadow:0 0 0 1px #8d52ff90,0 18px 60px #8d52ff24!important}
+.product-icon{color:#e0fbff!important;text-shadow:0 0 12px #fff,0 0 28px #52ddff,0 0 50px #8d52ff!important}
+.primary,.gold{border-color:#ffe6a0!important;background:linear-gradient(135deg,#6b3bc1,#b77cff 48%,#d9a943)!important;color:#10091a!important;box-shadow:0 9px 30px #8d52ff3b,0 0 0 1px #8d52ff!important}
+.primary:hover,.gold:hover{filter:brightness(1.12) saturate(1.08)!important;box-shadow:0 12px 34px #8d52ff55!important}
+.secondary{border-color:#8d52ff70!important;background:linear-gradient(145deg,#0a0c1c,#1a1030)!important;color:#e7dcff!important}
+.secondary:hover{border-color:#52ddff80!important;box-shadow:0 0 20px #52ddff18}
+.notice{background:linear-gradient(90deg,#160d26,#090b17)!important}
+.notice b{color:#c69aff!important}
+.pill{border-color:#8d52ff70!important;background:#18102b!important;color:#e5d3ff!important}
+.support-grid{gap:16px!important}
+.settings-list{background:linear-gradient(145deg,#100d20,#060814)!important}
+.setting{border-color:#8d52ff1f!important}
+.bottom{background:linear-gradient(180deg,#060712f2,#03040afc)!important;border-top:1px solid #8d52ff45!important;box-shadow:0 -10px 30px #000b!important}
+.bottom button{color:#a99ab9!important}.bottom button b{color:#b889ff!important}.bottom button.active{color:#f0e6ff!important}
+/* AUTH — enchanted castle / spellbook */
+.auth{background:radial-gradient(circle at 50% 25%,#3e2570 0,#100b25 28%,#03040a 70%)!important}
+.auth:after{content:"☾   ✦   ◇   ✧   ◇   ✦   ☽"!important;color:#c18cff55!important;text-shadow:0 0 20px #8d52ff;letter-spacing:12px!important}
+.auth-reference-shade{background:linear-gradient(90deg,#03040acc,#1b0e2f55,#03040acc)!important}
+.auth-card,.approved-auth-card{border-color:#8d52ff90!important;background:linear-gradient(145deg,#17102cf7,#050713f8)!important;box-shadow:0 35px 100px #000f,0 0 0 7px #8d52ff0b,0 0 60px #8d52ff20!important;clip-path:polygon(24px 0,calc(100% - 24px) 0,100% 24px,100% calc(100% - 24px),calc(100% - 24px) 100%,24px 100%,0 calc(100% - 24px),0 24px)!important}
+.auth-card:before{border-color:#c18cff36!important}
+.auth-card:after{content:"☽"!important;color:#52ddff!important;text-shadow:0 0 18px #52ddff!important}
+.auth-card .logo{background:radial-gradient(circle,#154f70,#17102c 58%,#36134e)!important;border-color:#c18cff90!important;box-shadow:0 0 0 7px #8d52ff0c,0 0 45px #52ddff38!important}
+.auth-card h1{color:#ffe7a6!important;text-shadow:0 0 25px #8d52ff55!important}
+.auth-card>p{color:#9e8bb8!important}
+.auth-card .tabs button.active{color:#ffe7a6!important;border-bottom-color:#b77cff!important;text-shadow:0 0 14px #8d52ff}
+.auth-card input{background:#04050d!important;border-color:#8d52ff35!important;color:#f8efff!important}
+.auth-card input:focus{border-color:#52ddff90!important;box-shadow:0 0 0 2px #52ddff12,inset 0 0 22px #0008!important}
+.auth-card .gold{background:linear-gradient(135deg,#6b3bc1,#b77cff 48%,#d9a943)!important}
+.auth-links button:hover{color:#c18cff!important}
+/* Forms / tables / dialogs */
+input,textarea,select{background:#050611!important;border-color:#8d52ff35!important;color:#f4edff!important}
+.row{border-bottom-color:#8d52ff18!important}.row b{color:#ffe4a0!important}.muted,.empty{color:#82768f!important}
+.modal,.dialog,.dropdown,.toast{background:#09091a!important;border-color:#8d52ff55!important;box-shadow:0 25px 80px #000e,0 0 35px #8d52ff18!important}
+@media(max-width:800px){
+ header{height:66px!important}.hero-card{min-height:540px!important}.hero-card:after{filter:drop-shadow(0 0 22px #8d52ff88)!important}.page-head{padding-left:16px}.products{grid-template-columns:1fr!important}.quick-grid{grid-template-columns:1fr 1fr!important}.bottom{height:72px!important}.auth-card{margin-top:365px!important;width:min(430px,92vw)!important}
+}
