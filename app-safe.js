@@ -20,7 +20,7 @@ const firebaseConfig = {
 };
 
 const auth = getAuth(initializeApp(firebaseConfig));
-const API = 'https://aurexa-backend.onrender.com';
+const API = 'https://aurexa-v3-staging.onrender.com';
 const CREATOR_EMAIL = 'nunezyenis05@gmail.com';
 let busy = false;
 let signupMode = false;
