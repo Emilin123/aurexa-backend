@@ -59,3 +59,24 @@ label input,.withdraw-form input{min-height:44px;}
   .auth-links button{min-height:44px;}
   .magic-actions button,.magic-lower button{min-height:44px;}
 }
+
+/* Final frontend visual/accessibility pass — 2026-09-07 (CSS-only, no behavior/economy changes) */
+html,body{max-width:100%;overflow-x:hidden}
+button,input,select,textarea{font:inherit}
+button{min-width:44px;min-height:44px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid #8cddff;outline-offset:3px;box-shadow:0 0 0 5px rgba(140,221,255,.22)}
+button:disabled{cursor:not-allowed;opacity:.65}
+.auth-card input{min-height:46px}
+.auth-links button{min-width:44px;min-height:44px;padding:8px 6px}
+.auth-card form>button{min-height:46px}
+.auth-card input::placeholder{color:#b6aab0;opacity:1}
+input[type=file]{min-height:44px;padding:8px;color:#f6e5bd;background:#08070a;border:1px solid #d7a13a55;border-radius:6px}
+input[type=file]::file-selector-button{min-height:32px;margin-right:8px;padding:5px 10px;border:1px solid #d7a13a90;border-radius:4px;background:#21112a;color:#ffe7aa;cursor:pointer}
+@media(max-width:650px){
+ .approved-auth-card{max-height:calc(100svh - 36px);overflow:auto}
+ .approved-auth-card h1{font-size:clamp(32px,10vw,43px)}
+ .auth-links{align-items:stretch}
+ .auth-links button{flex:1 1 44%;font-size:9px}
+}
+@media(max-width:380px){.auth-card{padding-left:16px;padding-right:16px}.auth-card h1{font-size:34px;letter-spacing:.05em}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
