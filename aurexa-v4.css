@@ -24,3 +24,9 @@
 .reference-home .hs-back{left:80.1%;top:90.35%;width:16.5%;height:3.7%}
 @media(min-width:577px){.reference-home{min-height:100vh;background-size:auto 100vh}}
 .app:has(.reference-home) .sidebar.open{display:block;position:fixed;z-index:10;left:0;top:0;height:100vh;width:252px;background:#06101d;box-shadow:0 0 34px #000;padding-top:20px}
+.mining-reference{position:relative;width:100%;min-height:100vh;background:#05070c url('/aurexa-mining-reference.jpg') center top/contain no-repeat;overflow:hidden}
+.mining-hotspot{position:absolute;display:block;padding:0;border:0;background:transparent;color:transparent;cursor:pointer;z-index:3}
+.mining-hotspot:focus-visible{outline:2px solid #6ffaff;box-shadow:0 0 18px #00eaff}
+.mine-mini{left:3%;top:73.2%;width:29%;height:9%}.mine-small{left:35.5%;top:73.2%;width:29%;height:9%}.mine-medium{left:68%;top:73.2%;width:29%;height:9%}
+.mine-start{left:3%;top:87.5%;width:19%;height:4.2%}.mine-wallet{left:23%;top:87.5%;width:18%;height:4.2%}.mine-history{left:42%;top:87.5%;width:18%;height:4.2%}.mine-details{left:61%;top:87.5%;width:18%;height:4.2%}.mine-back{left:80%;top:87.5%;width:17%;height:4.2%}
+@media(min-width:577px){.mining-reference{min-height:100vh;background-size:auto 100vh}}
