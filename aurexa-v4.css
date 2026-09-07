@@ -54,4 +54,36 @@
 @media(min-width:577px){.diamond-shop-reference{min-height:100vh;background-size:auto 100vh}}
 @media(max-width:576px){.diamond-live{font-size:10px}.diamond-live strong{font-size:11px}}
 
-.boot-screen{min-height:100vh;position:relative;display:grid;place-items:center;background:#02050b;overflow:hidden}.boot-screen>img{width:100%;height:100vh;object-fit:cover;object-position:center}.boot-overlay{position:absolute;left:12%;right:12%;bottom:9%;text-align:center;color:#ffe8a2;text-shadow:0 0 12px #000;font-weight:700}.boot-track{height:10px;margin-top:10px;border:1px solid #f4c95d;background:#06101c;border-radius:999px;overflow:hidden;box-shadow:0 0 18px #27e9ff55}.boot-track span{display:block;width:0;height:100%;background:linear-gradient(90deg,#27e9ff,#f4c95d);transition:width .25s ease}
+/* AUREXA Settings + Notifications reference screens. The supplied artwork is
+   the composition; controls are transparent, keyboard-accessible hotspots. */
+.app:has(.reference-settings) .topbar,.app:has(.reference-settings) .sidebar,.app:has(.reference-settings) .mobile-nav,.app:has(.reference-notifications) .topbar,.app:has(.reference-notifications) .sidebar,.app:has(.reference-notifications) .mobile-nav{display:none}
+.app:has(.reference-settings) .layout,.app:has(.reference-notifications) .layout{display:block;min-height:100vh}
+.app:has(.reference-settings) .main,.app:has(.reference-notifications) .main{padding:0;max-width:none;width:100%;min-height:100vh}
+.reference-settings,.reference-notifications{position:relative;width:100%;min-height:100vh;background-color:#05070c;background-position:center top;background-repeat:no-repeat;background-size:contain;overflow:hidden}
+.reference-settings{background-image:url('/aurexa-settings-reference.jpg')}.reference-notifications{background-image:url('/aurexa-notifications-reference.jpg')}
+@media(min-width:577px){.reference-settings,.reference-notifications{background-size:auto 100vh}}
+.settings-fields{position:absolute;left:23%;top:40.2%;width:54%;height:26%;display:flex;flex-direction:column;gap:1.55%;z-index:2}
+.settings-fields input{height:11.3%;min-height:0;padding:0 5%;border:0;background:transparent;color:#241d29;text-align:center;font:700 clamp(8px,1.7vw,13px) Georgia,serif;outline:0}
+.settings-hotspot,.notification-hotspot{position:absolute;z-index:4;padding:0;border:0;background:transparent;color:transparent;cursor:pointer;border-radius:4px}
+.settings-hotspot:focus-visible,.notification-hotspot:focus-visible{outline:2px solid #6ffaff;box-shadow:0 0 18px #00eaff}
+.settings-save,.settings-reset,.settings-language{top:68.7%;height:3.15%}.settings-save{left:12.2%;width:18%}.settings-reset{left:34.2%;width:18%}.settings-language{left:56.2%;width:22%}
+.settings-notify,.settings-signout,.settings-back{top:73.4%;height:3.25%}.settings-notify{left:12.2%;width:25%}.settings-signout{left:41%;width:21%}.settings-back{left:68%;width:20%}
+.notification-live{position:absolute;z-index:3;left:25%;top:34.7%;width:50%;height:29%;display:flex;align-items:center;justify-content:center;white-space:pre-line;text-align:center;color:#261e27;font:700 clamp(8px,1.65vw,13px) Georgia,serif;line-height:1.8;pointer-events:none;overflow:hidden;padding:4%}
+.notification-ranking,.notification-invite,.notification-copy{top:89.7%;height:3.6%}.notification-ranking{left:7%;width:25%}.notification-invite{left:35%;width:27%}.notification-copy{left:65%;width:27%}
+.notification-share,.notification-claim,.notification-back{top:94.0%;height:3.6%}.notification-share{left:9%;width:24%}.notification-claim{left:36%;width:28%}.notification-back{left:68%;width:23%}
+/* AUREXA skins/cosmetics reference screens. Artwork is preserved as the exact canvas; controls are transparent original-position hotspots. */
+.app:has(.cosmetics-reference) .topbar,.app:has(.cosmetics-reference) .sidebar,.app:has(.cosmetics-reference) .mobile-nav,.app:has(.cosmetic-detail-reference) .topbar,.app:has(.cosmetic-detail-reference) .sidebar,.app:has(.cosmetic-detail-reference) .mobile-nav{display:none}
+.app:has(.cosmetics-reference) .layout,.app:has(.cosmetic-detail-reference) .layout{display:block;min-height:100vh}
+.app:has(.cosmetics-reference) .main,.app:has(.cosmetic-detail-reference) .main{padding:0;max-width:none;width:100%;min-height:100vh}
+.cosmetics-reference,.cosmetic-detail-reference{position:relative;width:100%;min-height:100vh;background:#05070c center top/contain no-repeat;overflow:hidden}
+.cosmetics-reference{background-image:url('/aurexa-skins-reference.jpg')}.cosmetic-detail-reference{background-image:url('/aurexa-booster-detail-reference.jpg')}
+.cosmetics-hotspot{position:absolute;display:block;padding:0;border:0;background:transparent;color:transparent;cursor:pointer;z-index:4;border-radius:5px}
+.cosmetics-hotspot:focus-visible{outline:2px solid #70faff;box-shadow:0 0 16px #00eaff}
+.cosmetics-all,.cosmetics-skins,.cosmetics-boosters,.cosmetics-events,.cosmetics-fav{top:4.9%;height:4.2%}.cosmetics-all{left:31%;width:12%}.cosmetics-skins{left:44%;width:14%}.cosmetics-boosters{left:59%;width:15%}.cosmetics-events{left:75%;width:13%}.cosmetics-fav{left:88%;width:10%}
+.cosmetics-skin-equip,.cosmetics-skin-equip2{top:67.2%;height:3.8%;width:18%}.cosmetics-skin-equip{left:13%}.cosmetics-skin-equip2{left:69%}
+.cosmetics-booster-activate1,.cosmetics-booster-activate2,.cosmetics-booster-activate3{top:88.4%;height:3.5%;width:18%}.cosmetics-booster-activate1{left:14%}.cosmetics-booster-activate2{left:41%}.cosmetics-booster-activate3{left:69%}
+.cosmetics-details,.cosmetics-buy,.cosmetics-activate,.cosmetics-deactivate,.cosmetics-back{top:92.2%;height:4.2%}.cosmetics-details{left:5%;width:18%}.cosmetics-buy{left:24%;width:18%}.cosmetics-activate{left:43%;width:18%}.cosmetics-deactivate{left:62%;width:18%}.cosmetics-back{left:82%;width:15%}
+.detail-buy,.detail-activate,.detail-equip{top:87.2%;height:4.2%;width:27%}.detail-buy{left:7%}.detail-activate{left:37%}.detail-equip{left:67%}
+.detail-deactivate,.detail-continue,.detail-close,.detail-back{top:92.4%;height:4.2%;width:22%}.detail-deactivate{left:3%}.detail-continue{left:27%}.detail-close{left:51%}.detail-back{left:75%}
+@media(min-width:577px){.cosmetics-reference,.cosmetic-detail-reference{min-height:100vh;background-size:auto 100vh}}
+.mining-live{position:absolute;left:8%;right:8%;top:64.5%;height:7%;z-index:2;display:flex;align-items:center;justify-content:center;gap:18px;color:#ffe8a2;text-shadow:0 0 8px #000;font-weight:700;font-size:clamp(11px,2.1vw,18px);pointer-events:none}.mining-live span:empty{display:none}
