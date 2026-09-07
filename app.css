@@ -40,3 +40,22 @@ header{height:78px;position:sticky;top:0;z-index:40;display:grid;grid-template-c
 /* La referencia aprobada es ahora visible en la primera pantalla del proyecto. */
 .approved-auth{padding:0;display:block;min-height:100vh;background:#05020a;overflow:hidden}.auth-reference-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top}.auth-reference-shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(4,2,10,.05),rgba(4,2,10,.18) 52%,rgba(4,2,10,.72)),linear-gradient(0deg,rgba(4,2,10,.86),transparent 55%);pointer-events:none}.approved-auth-card{position:absolute;z-index:2;right:6vw;bottom:5vh;width:min(390px,88vw);background:rgba(8,4,16,.76);backdrop-filter:blur(4px);border-color:#e1b95f99;box-shadow:0 0 0 1px #6c3d9a55,0 0 45px #6f36aa66,0 30px 80px #000}.approved-auth-card:before{border-color:#e1b95f55}.approved-auth-card h1{font-size:43px}.approved-auth-card>p{color:#b9eaff}.approved-auth .logo{color:#8cddff;text-shadow:0 0 18px #8cddff}
 @media(max-width:650px){.approved-auth-card{right:50%;transform:translateX(50%);bottom:18px;width:min(390px,calc(100vw - 24px));padding:25px 22px}.auth-reference-image{object-position:center top}.approved-auth-shade{background:linear-gradient(0deg,rgba(4,2,10,.95),rgba(4,2,10,.05) 75%)}}
+
+/* Responsive QA pass — layout safety and touch ergonomics (frontend-only). */
+img,svg,video,canvas{max-width:100%;}
+#view,.hero-card,.card,.mine-card,.wallet-main,.profile-card,.product,.notice,.support-card,.quick-card,.settings-list{min-width:0;}
+.top-right button,.mobile-menu,.bottom button{min-width:44px;min-height:44px;}
+label input,.withdraw-form input{min-height:44px;}
+@media (max-width:800px){
+  .hero-card{width:100%;overflow:hidden;}
+  .hero-copy{min-width:0;}
+  .actions{width:100%;}
+  .actions button{min-height:44px;}
+  .bottom button{padding-inline:2px;}
+}
+@media (max-width:430px){
+  .auth-card{width:calc(100vw - 24px);max-width:420px;}
+  .auth-links{flex-wrap:wrap;}
+  .auth-links button{min-height:44px;}
+  .magic-actions button,.magic-lower button{min-height:44px;}
+}
