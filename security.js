@@ -37,6 +37,17 @@ function registerSecurityRoutes(app, { supabase, requireFirebaseUser }) {
     }
   });
 
+  // /api/v2/mine historically fell back to the obsolete mining_plans table when
+  // no plan_code was supplied. Block that legacy path so mining can only use the
+  // canonical AUREXA wells handled by aurexa_start_mining.
+  app.use('/api/v2/mine', requireFirebaseUser, (req, res, next) => {
+    const planCode = String(req.body?.plan_code || req.body?.planCode || '').trim();
+    if (!planCode) {
+      return res.status(400).json({ ok: false, error: 'Debes seleccionar un pozo de minería válido' });
+    }
+    next();
+  });
+
   app.post('/api/security/bonus-precheck', requireFirebaseUser, async (req, res) => {
     try {
       if (!secret) return res.status(503).json({ ok: false, error: 'Anti-abuse secret is not configured' });
