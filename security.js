@@ -21,6 +21,22 @@ function registerSecurityRoutes(app, { supabase, requireFirebaseUser }) {
   const secret = String(process.env.AUREXA_ANTI_ABUSE_SECRET || '').trim();
   const bonusAmount = Number(process.env.AUREXA_WELCOME_BONUS_DIAMONDS || 0);
 
+  // Collect time-based VIP earnings before any wallet-sensitive endpoint continues.
+  // The database function is idempotent, so repeated requests cannot double-credit.
+  app.use(['/api/v2/me', '/api/v2/mining', '/api/v2/me/wallet/transactions', '/api/v2/withdrawals'], requireFirebaseUser, async (req, res, next) => {
+    try {
+      const { data: result, error } = await supabase.rpc('aurexa_collect_vip_for_firebase', {
+        p_firebase_uid: req.firebaseUser.uid
+      });
+      if (error) throw error;
+      req.aurexaVipCollection = result || null;
+      next();
+    } catch (error) {
+      console.error('vip-collection error:', error.message);
+      return res.status(500).json({ ok: false, error: 'No se pudo actualizar la recompensa VIP' });
+    }
+  });
+
   app.post('/api/security/bonus-precheck', requireFirebaseUser, async (req, res) => {
     try {
       if (!secret) return res.status(503).json({ ok: false, error: 'Anti-abuse secret is not configured' });
