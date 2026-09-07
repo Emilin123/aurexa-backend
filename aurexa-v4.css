@@ -53,3 +53,5 @@
 .diamond-live-0,.diamond-live-1{top:30.0%}.diamond-live-2,.diamond-live-3{top:52.0%}.diamond-live-4,.diamond-live-5{top:74.0%}.diamond-live-1,.diamond-live-3,.diamond-live-5{left:54%;width:36%}
 @media(min-width:577px){.diamond-shop-reference{min-height:100vh;background-size:auto 100vh}}
 @media(max-width:576px){.diamond-live{font-size:10px}.diamond-live strong{font-size:11px}}
+
+.boot-screen{min-height:100vh;position:relative;display:grid;place-items:center;background:#02050b;overflow:hidden}.boot-screen>img{width:100%;height:100vh;object-fit:cover;object-position:center}.boot-overlay{position:absolute;left:12%;right:12%;bottom:9%;text-align:center;color:#ffe8a2;text-shadow:0 0 12px #000;font-weight:700}.boot-track{height:10px;margin-top:10px;border:1px solid #f4c95d;background:#06101c;border-radius:999px;overflow:hidden;box-shadow:0 0 18px #27e9ff55}.boot-track span{display:block;width:0;height:100%;background:linear-gradient(90deg,#27e9ff,#f4c95d);transition:width .25s ease}
