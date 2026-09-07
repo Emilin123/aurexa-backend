@@ -14,12 +14,13 @@
 .app:has(.reference-home) .layout{display:block;min-height:100vh}
 .app:has(.reference-home) .main{padding:0;max-width:none;width:100%;min-height:100vh}
 .reference-home{position:relative;width:100%;min-height:100vh;background:#05070c url('/aurexa-home-reference.jpg') center top/contain no-repeat;overflow:hidden}
-.reference-home .reference-hotspot{position:absolute;display:block;padding:0;border:0;background:transparent;color:transparent;border-radius:18px;cursor:pointer;z-index:3}
+.reference-home .reference-hotspot{position:absolute;display:block;padding:0;border:0;background:transparent;color:transparent;border-radius:4px;cursor:pointer;z-index:3}
 .reference-home .reference-hotspot:focus-visible{outline:2px solid #6ffaff;box-shadow:0 0 18px #00eaff}
-.reference-home .hs-mining{left:25%;top:57%;width:24%;height:8%}.reference-home .hs-store{left:52%;top:57%;width:24%;height:8%}
-.reference-home .hs-wallet{left:25%;top:66%;width:24%;height:8%}.reference-home .hs-profile{left:52%;top:66%;width:24%;height:8%}
-.reference-home .hs-notifications{left:25%;top:75%;width:24%;height:8%}.reference-home .hs-menu{left:52%;top:75%;width:24%;height:8%}
-.reference-home .hs-signout{left:25%;top:84%;width:50%;height:6%}.reference-home .hs-back{left:32%;top:96%;width:36%;height:4%}
-@media(max-aspect-ratio:9/16){.reference-home{background-size:cover;background-position:center top}}
+/* Hotspots align to the five original controls in the supplied 576x1024 reference. */
+.reference-home .hs-mining{left:3.1%;top:90.35%;width:19.3%;height:3.7%}
+.reference-home .hs-wallet{left:23.6%;top:90.35%;width:17.0%;height:3.7%}
+.reference-home .hs-history{left:40.4%;top:90.35%;width:18.0%;height:3.7%}
+.reference-home .hs-details{left:59.3%;top:90.35%;width:18.0%;height:3.7%}
+.reference-home .hs-back{left:80.1%;top:90.35%;width:16.5%;height:3.7%}
 @media(min-width:577px){.reference-home{min-height:100vh;background-size:auto 100vh}}
 .app:has(.reference-home) .sidebar.open{display:block;position:fixed;z-index:10;left:0;top:0;height:100vh;width:252px;background:#06101d;box-shadow:0 0 34px #000;padding-top:20px}
