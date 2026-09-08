@@ -2,7 +2,7 @@
 
 - Entrada: 100 diamantes.
 - Premio inicial: 1.000 CUP por ganador.
-- Ganadores iniciales: 10 por día; la creadora podrá cambiar la cantidad en futuras versiones.
+- Ganadores dinámicos por participantes: 1–9 = 1 ganador; 10–49 = 3 ganadores; 50–99 = 5 ganadores; 100–500 = 10 ganadores.
 - Límite: 500 participantes por rifa.
 - Acceso: usuarios verificados.
 - Horario: 08:00–17:00, zona America/Havana.
