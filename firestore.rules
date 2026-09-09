@@ -1,0 +1,141 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isCreator() {
+      return isAuthenticated() && (
+        request.auth.token.role == 'creator' ||
+        request.auth.token.phone_number == '+5355720394' ||
+        request.auth.token.email == 'proyectoaurexa@gmail.com'
+      );
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        isCreator() ||
+        request.auth.token.role == 'admin_secondary' ||
+        request.auth.token.admin == true
+      );
+    }
+
+    // 1. users: Users can read their own profile, create upon registration.
+    // Client CANNOT modify balance, role, status or creator privileges directly.
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isOwner(userId)
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['diamonds', 'role', 'status', 'isCreator', 'balance'])
+                    || isAdmin();
+      allow delete: if isCreator();
+    }
+
+    // 2. roles: Strict RBAC
+    match /roles/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isCreator();
+    }
+
+    // 3. diamonds: Ledger of balances - strictly server/admin authoritative
+    match /diamonds/{diamondId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // 4. mining: Well activations and rates
+    match /mining/{miningId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // 5. memberships: VIP tiers definition
+    match /memberships/{membershipId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 6. purchases: Purchase requests and receipts
+    match /purchases/{purchaseId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && request.resource.data.status == 'pending';
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // 7. payments: Banking validation logs
+    match /payments/{paymentId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // 8. withdrawals: Cashout requests
+    match /withdrawals/{withdrawalId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && request.resource.data.status == 'pendiente';
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // 9. raffles: Carta Ganadora rounds
+    match /raffles/{raffleId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 10. raffleEntries: Entries for Carta Ganadora
+    match /raffleEntries/{entryId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // 11. benefits: Daily streak and welcome rewards
+    match /benefits/{benefitId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 12. achievements: Progression badges
+    match /achievements/{achId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // 13. notifications: User and system alerts
+    match /notifications/{notifId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isAdmin();
+      allow update: if isOwner(resource.data.userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+
+    // 14. auditLogs: Immutable trail
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // 15. appSettings: General schedule and config
+    match /appSettings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 16. appUpdates: Releases and maintenance notices
+    match /appUpdates/{updateId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

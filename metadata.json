@@ -1,0 +1,6 @@
+{
+  "name": "AUREXA",
+  "description": "Plataforma de minería, diamantes, membresías VIP y horarios de atención con temática gótica medieval",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

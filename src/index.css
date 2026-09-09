@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #07060a;
+    color: #f1ecf4;
+    overflow-x: hidden;
+  }
+}
+
+.font-gothic {
+  font-family: 'Cinzel', Georgia, serif;
+}
+
+.gothic-glow-gold {
+  text-shadow: 0 0 16px rgba(231, 194, 125, 0.45);
+}
+
+.gothic-glow-cyan {
+  text-shadow: 0 0 16px rgba(36, 231, 255, 0.45);
+}
+
+.gothic-glow-purple {
+  text-shadow: 0 0 24px rgba(168, 85, 247, 0.5);
+}
+
+/* Custom scrollbar for gothic tables and views */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0d0b12;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a2233;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #463954;
+}
+
