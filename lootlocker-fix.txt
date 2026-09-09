@@ -1,4 +1,0 @@
-// Compatibility entrypoint for the existing Render start command.
-// Render is still configured to start this legacy filename; keep it as a thin
-// wrapper so the actual backend implementation is always server.js.
-require('./server.js');
