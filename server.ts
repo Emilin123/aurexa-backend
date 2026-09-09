@@ -370,7 +370,7 @@ app.post('/api/telegram/webhook', async (req, res) => {
 // VITE MIDDLEWARE / STATIC ASSETS
 // ----------------------------------------------------------------------------
 async function startServer() {
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env.NODE_ENV !== 'production' && process.env.RENDER !== 'true') {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
