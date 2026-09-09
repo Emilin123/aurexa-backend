@@ -1,1 +1,1 @@
-AUREXA original UI import. The archive contains 22 unique screen images and an original controller. The active entrypoint is index.html -> styles.css + aurexa-original-ui.js.
+AUREXA original UI import from AUREXA-original-ui-complete-review.zip. Active entrypoint: index.html -> styles.css + aurexa-original-ui.js.
