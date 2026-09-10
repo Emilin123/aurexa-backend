@@ -14,10 +14,6 @@ export const AUREXA_CONFIG = {
   creatorPhone: '',
   telegramAdminChatId: '',
   telegramWebhookSecret: '',
-  creatorEmail: '',
-  creatorPhone: '',
-  telegramAdminChatId: '',
-  telegramWebhookSecret: '',
   withdrawalFeePercent: 25,
   withdrawalFeeRate: 0.25,
   minWithdrawalDiamonds: 10,
@@ -30,7 +26,6 @@ export const AUREXA_CONFIG = {
   rafflePrizeCup: 1000,
   raffleMaxParticipants: 500,
 };
-
 export const INITIAL_PACKAGES: DiamondPackage[] = [
   { id: 'pkg-starter', name: 'Paquete Iniciado Cripto', diamonds: 300, priceCup: 500, tag: 'BÁSICO', badge: 'ENTRADA RÁPIDA', active: false },
   { id: 'pkg-alchemist', name: 'Paquete Alquimista Real', diamonds: 750, priceCup: 1200, bonusPercent: 10, tag: 'POPULAR', popular: true, badge: '+10% BONO', active: false },
@@ -63,7 +58,7 @@ export const RAFFLE_CARDS: RaffleCard[] = [
   { id: 'card-wunjo', runeName: 'Wunjo', symbol: 'ᚹ', element: 'Luz Serena', meaning: 'Triunfo' },
   { id: 'card-sowilo', runeName: 'Sowilo', symbol: 'ᛋ', element: 'Sol Invictus', meaning: 'Protección' },
 ];
-export const INITIAL_RAFFLE_ROUND: RaffleRound = { id: 'current', date: '', entryFeeDiamonds: 100, prizeCup: 1000, maxParticipants: 500, currentParticipants: 0, status: 'EN_PRUEBAS', startTime: '08:00', endTime: '17:00', prizeStatus: 'PENDIENTE' };
+export const INITIAL_RAFFLE_ROUND: RaffleRound = { id: 'current', date: '', entryFeeDiamonds: 100, prizeCup: 1000, maxParticipants: 500, currentParticipants: 0, status: 'RIFA_CERRADA', startTime: '08:00', endTime: '17:00', prizeStatus: 'PENDIENTE' };
 export const INITIAL_BENEFITS: BenefitItem[] = [];
 export const INITIAL_ACHIEVEMENTS: AchievementItem[] = [];
 export const INITIAL_ADMINS: AdminAccount[] = [];
@@ -71,7 +66,4 @@ export const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [];
 export function getCurrentCubaHour(): number { return Number(new Intl.DateTimeFormat('en-US', { timeZone: AUREXA_CONFIG.operationalTimeZone, hour: '2-digit', hour12: false }).format(new Date())); }
 export function isGeneralOperationsOpenNow(): boolean { const h = getCurrentCubaHour(); return h >= AUREXA_CONFIG.openHour && h < AUREXA_CONFIG.closeHour; }
 export function isRaffleOpenNow(): boolean { const h = getCurrentCubaHour(); return h >= AUREXA_CONFIG.raffleOpenHour && h < AUREXA_CONFIG.raffleCloseHour; }
-
-export function buildWhatsAppPurchaseUrl(_userIdentifier: string, _pkg: DiamondPackage, _operationId: string): string { return ''; }
-
 export function buildWhatsAppPurchaseUrl(_userIdentifier: string, _pkg: DiamondPackage, _operationId: string): string { return ''; }
