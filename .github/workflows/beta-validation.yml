@@ -1,0 +1,160 @@
+name: AUREXA Beta Validation
+
+on:
+  push:
+    branches:
+      - google-studio-import-20260909
+  pull_request:
+    branches:
+      - google-studio-import-20260909
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: Validation stage (informational; code is always validated as checked out)
+        required: false
+        default: original
+        type: choice
+        options:
+          - original
+          - patch-a
+          - patch-b
+          - integrated
+
+permissions:
+  contents: read
+
+concurrency:
+  group: aurexa-beta-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend-bun:
+    name: Frontend / Bun
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.2.21'
+
+      - name: Show runtime
+        run: |
+          bun --version
+          node --version
+
+      - name: Ensure frontend uses Bun lockfile only
+        shell: bash
+        run: |
+          test -f bun.lock
+          if test -f package-lock.json; then
+            echo 'ERROR: package-lock.json exists; frontend validation must not create or use one.'
+            exit 1
+          fi
+
+      - name: Clean dependency directory
+        run: rm -rf node_modules
+
+      - name: Install frontend dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Type-check
+        run: bun run type-check
+
+      - name: Tests
+        run: bun run test
+
+      - name: Build
+        run: bun run build
+
+  backend-npm:
+    name: Backend / Node 22 + npm ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22.16.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+          cache: npm
+
+      - name: Show runtime
+        run: |
+          node --version
+          npm --version
+
+      - name: Require backend lockfile
+        shell: bash
+        run: |
+          test -f package-lock.json
+          if test -f bun.lock; then
+            echo 'INFO: bun.lock is present in this repository; backend validation still uses package-lock.json and npm ci.'
+          fi
+
+      - name: Clean dependency directory
+        run: rm -rf node_modules
+
+      - name: Install backend dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npx tsc --noEmit
+
+      - name: Tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  no-public-secrets:
+    name: Bundle / secret guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [frontend-bun, backend-npm]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 22.16.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+
+      - name: Clean dependency directory
+        run: rm -rf node_modules
+
+      - name: Install with npm for static bundle inspection
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Reject obvious private-secret material in source and build output
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RInE --exclude-dir=node_modules --exclude-dir=.git --exclude='*.map' \
+            'BEGIN (RSA|EC|DSA|OPENSSH) PRIVATE KEY|serviceAccount[^A-Za-z0-9_]*[:=]|TELEGRAM_BOT_TOKEN[^A-Za-z0-9_]*[:=][[:space:]]*["'"'][^"'"']+["'"']|FIREBASE_SERVICE_ACCOUNT_JSON[^A-Za-z0-9_]*[:=][[:space:]]*["'"'][^"'"']+["'"']' \
+            . dist; then
+            echo 'ERROR: possible private secret found in source or bundle.'
+            exit 1
+          fi
+
+      - name: Verify no frontend npm lockfile was generated
+        run: |
+          if test -f bun.lock && git ls-files --error-unmatch package-lock.json >/dev/null 2>&1; then
+            echo 'ERROR: repository tracks package-lock.json; frontend lockfile policy violated.'
+            exit 1
+          fi
