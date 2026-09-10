@@ -36,10 +36,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Bun
+      - name: Set up Bun compatible with bun.lock v2
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: '1.2.21'
+          bun-version: '1.4.0'
 
       - name: Show runtime
         run: |
@@ -109,7 +109,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22.16.0'
-          cache: npm
 
       - name: Require backend lockfile
         run: test -f package-lock.json
