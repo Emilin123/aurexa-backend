@@ -11,7 +11,6 @@ app.use(express.json());
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 const TELEGRAM_ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID || '';
 const TELEGRAM_WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET || '';
-
 const processedEventIds = new Set<string>();
 const recentDispatches: Array<{ id: string; eventId: string; timestamp: string; recipientChatId: string; success: boolean; code?: string; }> = [];
 const requestRateMap = new Map<string, number[]>();
@@ -102,7 +101,11 @@ app.post('/api/telegram/webhook', async (req, res) => {
   if (!TELEGRAM_ADMIN_CHAT_ID || chatId !== TELEGRAM_ADMIN_CHAT_ID) return res.status(200).json({ ok: true, rejected: true });
   const cmd = text.split(' ')[0].toLowerCase();
   const replyText = cmd === '/start' ? '👑 Sistema de avisos administrativo de Aurexa activo.' : '📖 Comandos administrativos disponibles en el canal privado.';
-  if (TELEGRAM_BOT_TOKEN) { try { await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, { chat_id: chatId, text: replyText, parse_mode: 'Markdown' }); } catch {} }
+  if (TELEGRAM_BOT_TOKEN) {
+    try {
+      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: chatId, text: replyText, parse_mode: 'Markdown' }) });
+    } catch {}
+  }
   return res.status(200).json({ ok: true, command: cmd });
 });
 
