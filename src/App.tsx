@@ -308,21 +308,9 @@ export default function App() {
   }, [creatorAuthenticated, activeView]);
 
   // Persist local state
-  useEffect(() => {
-    localStorage.setItem('aurexa_user', JSON.stringify(user));
-  }, [user]);
 
-  useEffect(() => {
-    localStorage.setItem('aurexa_wells', JSON.stringify(wells));
-  }, [wells]);
 
-  useEffect(() => {
-    localStorage.setItem('aurexa_txs', JSON.stringify(transactions));
-  }, [transactions]);
 
-  useEffect(() => {
-    localStorage.setItem('aurexa_withdrawals', JSON.stringify(withdrawals));
-  }, [withdrawals]);
 
   // Toast Helper
   const addToast = (type: 'success' | 'info' | 'error', title: string, message: string) => {
@@ -433,37 +421,36 @@ export default function App() {
   // --------------------------------------------------------------------------
   // MINING LOGIC
   // --------------------------------------------------------------------------
-  const handleClaimMiningYield = (wellId: string) => {
-    const well = wells.find((w) => w.id === wellId);
-    if (!well) return;
-
-    soundFx.playGemDing();
-    const yieldAmount = well.dailyProduction;
-
-    setUser((prev) => ({
-      ...prev,
-      diamonds: prev.diamonds + yieldAmount,
-    }));
-
-    setWells((prev) =>
-      prev.map((w) => (w.id === wellId ? { ...w, lastClaimedAt: new Date().toISOString() } : w))
-    );
-
-    const tx: Transaction = {
-      id: `tx-mine-${Date.now()}`,
-      type: 'mineria',
-      description: `Rendimiento de extracción: ${well.name}`,
-      amountDiamonds: yieldAmount,
-      status: 'completado',
-      createdAt: new Date().toISOString().replace('T', ' ').slice(0, 16),
-      referenceCode: `MINE-${wellId.toUpperCase()}-${Date.now().toString().slice(-4)}`,
-    };
-    setTransactions((prev) => [tx, ...prev]);
-
-    logAudit('MINING_CLAIM', 'mining', wellId, `Usuario reclamó ${yieldAmount} diamantes del pozo ${well.name}.`);
-    addToast('success', '¡Diamantes Extraídos!', `Has recolectado +${yieldAmount} Diamantes de ${well.name}.`);
+  const getServerToken = async () => auth.currentUser ? auth.currentUser.getIdToken(true) : null;
+  const handleClaimMiningYield = async (wellId: string) => {
+    const token = await getServerToken();
+    if (!token) { addToast('error', 'Sesión requerida', 'Inicia sesión para liquidar minería.'); return; }
+    try {
+      const response = await fetch(AUREXA_CONFIG.stagingBaseUrl + '/api/mining/wells/' + wellId + '/settle', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() },
+        body: JSON.stringify({ clientNow: new Date().toISOString() }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'No se pudo liquidar la producción');
+      setUser((prev) => ({ ...prev, diamonds: Number(data.balance) }));
+      setWells((prev) => prev.map((w) => w.id === wellId ? { ...w, accumulatedDiamonds: Number(data.reward), lastClaimedAt: data.lastSettledAt } : w));
+      addToast('success', data.replay ? 'Operación ya procesada' : 'Producción liquidada', '+' + Number(data.reward).toFixed(2) + ' D acreditados por el servidor.');
+    } catch (error) { addToast('error', 'Liquidación rechazada', error instanceof Error ? error.message : 'Error de servidor'); }
   };
 
+  const handleActivateWell = async (well: MiningWell) => {
+    const token = await getServerToken();
+    if (!token) { addToast('error', 'Sesión requerida', 'Inicia sesión para activar un pozo.'); return; }
+    try {
+      const response = await fetch(AUREXA_CONFIG.stagingBaseUrl + '/api/mining/wells/' + well.id + '/activate', { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Idempotency-Key': crypto.randomUUID() } });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'No se pudo activar el pozo');
+      setUser((prev) => ({ ...prev, diamonds: Number(data.state?.balance ?? prev.diamonds - well.priceDiamonds) }));
+      setWells((prev) => prev.map((w) => w.id === well.id ? { ...w, active: true } : w));
+      addToast('success', 'Pozo activado', 'La activación fue confirmada por el servidor.');
+    } catch (error) { addToast('error', 'Activación rechazada', error instanceof Error ? error.message : 'Error de servidor'); }
+  };
   // --------------------------------------------------------------------------
   // STORE PAYMENT FLOW
   // --------------------------------------------------------------------------
@@ -1049,7 +1036,7 @@ export default function App() {
         activeView={activeView}
         onNavigate={(v) => {
           soundFx.playGemDing();
-          if (v === 'creator' && !creatorAuthenticated) {
+          if (v === 'creator') {
             setShowCreatorAuthModal(true);
             return;
           }
@@ -1069,7 +1056,7 @@ export default function App() {
           activeView={activeView}
           onNavigate={(v) => {
             soundFx.playGemDing();
-            if (v === 'creator' && !creatorAuthenticated) {
+            if (v === 'creator') {
               setShowCreatorAuthModal(true);
               return;
             }
@@ -1085,7 +1072,7 @@ export default function App() {
               activeWell={activeWell}
               onNavigate={(v) => {
                 soundFx.playGemDing();
-                if (v === 'creator' && !creatorAuthenticated) {
+                if (v === 'creator') {
                   setShowCreatorAuthModal(true);
                   return;
                 }
@@ -1123,10 +1110,12 @@ export default function App() {
             <MiningView
               wells={wells}
               userDiamonds={user.diamonds}
-              onClaimYield={handleClaimMiningYield}
-              onUpgradeWell={() => {
-                addToast('info', 'Mejora de Pozo', 'Contacta a la creadora para ampliar la cuota de extracción.');
-              }}
+              claimedWelcomeBonus={true}
+              onClaimWelcomeBonus={() => addToast('info', 'En pruebas', 'El bono se acredita exclusivamente por backend.')}
+              onManualMine={() => addToast('info', 'En pruebas', 'La minería manual del navegador está deshabilitada hasta disponer de endpoint server-authoritative.')}
+              onActivateWell={handleActivateWell}
+              onClaimDiamonds={handleClaimMiningYield}
+              onNavigateStore={() => setActiveView('store')}
             />
           )}
 
@@ -1204,7 +1193,7 @@ export default function App() {
           )}
 
           {/* CREATOR VIEW WITH STRICT ACCESS GUARD */}
-          {activeView === 'creator' && (
+          {false && activeView === 'creator' && (
             creatorAuthenticated ? (
               <CreatorView
                 pendingTransactions={pendingTransactions}
@@ -1273,7 +1262,7 @@ export default function App() {
         activeView={activeView}
         onNavigate={(v) => {
           soundFx.playGemDing();
-          if (v === 'creator' && !creatorAuthenticated) {
+          if (v === 'creator') {
             setShowCreatorAuthModal(true);
             return;
           }
@@ -1299,18 +1288,7 @@ export default function App() {
         />
       )}
 
-      {/* Creator 2FA / OTP Gate Modal */}
-      <CreatorAuthModal
-        isOpen={showCreatorAuthModal}
-        onClose={() => setShowCreatorAuthModal(false)}
-        onAuthenticated={(operator) => {
-          setCreatorAuthenticated(true);
-          setCreatorOperatorName(operator);
-          setActiveView('creator');
-          logAudit('CREATOR_LOGIN_2FA', 'auth', 'creator-55720394', `Sesión de creadora autenticada con 2FA.`);
-          addToast('success', 'Acceso Concedido', 'Has ingresado al Panel de Control de la Creadora.');
-        }}
-      />
+      
 
       {/* Auth Modal for In-App Password Change */}
       <AuthModal
