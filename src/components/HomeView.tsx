@@ -1,36 +1,9 @@
 import React from 'react';
-import { 
-  Sparkles, 
-  Diamond, 
-  Pickaxe, 
-  Crown, 
-  Clock, 
-  ArrowRight, 
-  ShieldCheck, 
-  Flame, 
-  ArrowUpRight,
-  Zap,
-  Gift,
-  Trophy
-} from 'lucide-react';
+import { Sparkles, Diamond, Pickaxe, Crown, Clock, ShieldCheck, Flame, Zap } from 'lucide-react';
 import { UserProfile, ViewType, MiningWell } from '../types';
 import { AUREXA_CONFIG } from '../data/aurexaData';
-
-interface HomeViewProps {
-  user: UserProfile;
-  activeWell: MiningWell | null;
-  onNavigate: (view: ViewType) => void;
-  onOpenStore: () => void;
-  onClaimMining: () => void;
-}
-
-export const HomeView: React.FC<HomeViewProps> = ({
-  user,
-  activeWell,
-  onNavigate,
-  onOpenStore,
-  onClaimMining,
-}) => {
+interface HomeViewProps { user: UserProfile; activeWell: MiningWell | null; onNavigate: (view: ViewType) => void; onOpenStore: () => void; onOpenMining?: () => void; onOpenWallet?: () => void; onOpenHours?: () => void; onClaimMining?: () => void; onClaimWellYield?: (wellId: string) => void; }
+export const HomeView: React.FC<HomeViewProps> = ({ user, activeWell, onNavigate, onOpenStore, onOpenMining, onOpenWallet, onOpenHours, onClaimMining, onClaimWellYield }) => {
   const cupEquivalent = user.diamonds * AUREXA_CONFIG.exchangeRateCupPerDiamond;
-
-  return (
+  return <div className="space-y-8 animate-fadeIn pb-12"><header className="space-y-2"><div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold uppercase tracking-wider"><Crown className="w-3.5 h-3.5" /> Reino de Aurexa</div><h1 className="font-gothic text-4xl font-bold text-white">Bienvenido, {user.username}</h1><p className="text-sm text-stone-400">Tu cuenta y saldo se muestran desde el estado autenticado.</p></header><section className="grid grid-cols-1 md:grid-cols-3 gap-4"><div className="rounded-2xl border border-cyan-500/30 bg-[#100d17] p-6"><Diamond className="w-7 h-7 text-cyan-300 mb-3"/><div className="text-xs text-stone-500 uppercase">Diamantes</div><div className="text-3xl font-mono font-bold text-white">{user.diamonds.toLocaleString()}</div><div className="text-xs text-stone-500 mt-1">≈ {cupEquivalent.toLocaleString()} CUP</div></div><div className="rounded-2xl border border-amber-500/30 bg-[#100d17] p-6"><Flame className="w-7 h-7 text-amber-300 mb-3"/><div className="text-xs text-stone-500 uppercase">Nivel</div><div className="text-3xl font-bold text-white">{user.level}</div><div className="text-xs text-stone-500 mt-1">{user.vipTier}</div></div><div className="rounded-2xl border border-emerald-500/30 bg-[#100d17] p-6"><ShieldCheck className="w-7 h-7 text-emerald-300 mb-3"/><div className="text-xs text-stone-500 uppercase">Cuenta</div><div className="text-lg font-bold text-emerald-300">{user.emailVerified ? 'Verificada' : 'Pendiente'}</div></div></section><section className="rounded-2xl border border-stone-800 bg-[#100d17] p-6 space-y-4"><div className="flex items-center gap-2"><Pickaxe className="w-5 h-5 text-amber-400"/><h2 className="font-gothic text-2xl font-bold text-white">Minería</h2></div><p className="text-sm text-stone-400">La liquidación de producción se valida exclusivamente en el servidor y no depende del reloj del teléfono.</p>{activeWell ? <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-cyan-500/20 bg-black/20 p-4"><div><div className="font-semibold text-white">{activeWell.name}</div><div className="text-xs text-stone-500">{activeWell.speedPerSec} D/seg · límite offline 24 h</div></div><button onClick={() => onClaimWellYield ? onClaimWellYield(activeWell.id) : onClaimMining?.()} className="px-5 py-2.5 rounded-xl bg-cyan-500 text-stone-950 font-bold text-xs flex items-center gap-2"><Sparkles className="w-4 h-4"/> Liquidar producción</button></div> : <div className="text-sm text-stone-500">No hay un pozo activo.</div>}</section><section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"><button onClick={onOpenMining || (() => onNavigate('mining'))} className="rounded-xl border border-stone-800 bg-[#100d17] p-4 text-left"><Pickaxe className="w-5 h-5 text-cyan-300 mb-2"/><div className="font-semibold text-white">Empezar a Minar</div></button><button onClick={onOpenWallet || (() => onNavigate('wallet'))} className="rounded-xl border border-stone-800 bg-[#100d17] p-4 text-left"><Diamond className="w-5 h-5 text-amber-300 mb-2"/><div className="font-semibold text-white">Billetera</div></button><button onClick={onOpenStore} className="rounded-xl border border-stone-800 bg-[#100d17] p-4 text-left"><Zap className="w-5 h-5 text-emerald-300 mb-2"/><div className="font-semibold text-white">Comprar</div></button><button onClick={onOpenHours || (() => onNavigate('hours'))} className="rounded-xl border border-stone-800 bg-[#100d17] p-4 text-left"><Clock className="w-5 h-5 text-purple-300 mb-2"/><div className="font-semibold text-white">Horarios</div></button></section></div>;
+};
