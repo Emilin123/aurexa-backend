@@ -10,6 +10,10 @@ export const AUREXA_CONFIG = {
   apiBaseUrl: 'https://aurexa-v3-staging.onrender.com',
   stagingBaseUrl: 'https://aurexa-v3-staging.onrender.com',
   exchangeRateCupPerDiamond: 5,
+  creatorEmail: '',
+  creatorPhone: '',
+  telegramAdminChatId: '',
+  telegramWebhookSecret: '',
   withdrawalFeePercent: 25,
   withdrawalFeeRate: 0.25,
   minWithdrawalDiamonds: 10,
@@ -41,9 +45,9 @@ export const INITIAL_VIPS: VipPlan[] = [
 export const INITIAL_TRANSACTIONS: Transaction[] = [];
 export const SERVICE_HOURS_RULES: ServiceHourRule[] = [
   { service: 'Atención al Cliente y Consultas', hours: 'Todos los días · 8:00 a. m. a 10:00 p. m. (Hora de Cuba)', timeEstimate: '15 minutos a 1 hora', status: 'DISPONIBLE', details: 'Soporte general.' },
-  { service: 'Compras y Recargas', hours: '8:00 a. m. a 10:00 p. m. (Hora de Cuba)', timeEstimate: 'EN PRUEBAS', status: 'EN PRUEBAS', details: 'Acreditación backend pendiente.' },
-  { service: 'Retiros', hours: '8:00 a. m. a 10:00 p. m. (Hora de Cuba)', timeEstimate: 'EN PRUEBAS', status: 'EN PRUEBAS', details: 'Temporalmente deshabilitado.' },
-  { service: 'Carta Ganadora del Día', hours: '8:00 a. m. a 5:00 p. m. (Hora de Cuba)', timeEstimate: 'EN PRUEBAS', status: 'EN PRUEBAS', details: 'Participación server-authoritative pendiente.' },
+  { service: 'Compras y Recargas', hours: '8:00 a. m. a 10:00 p. m. (Hora de Cuba)', timeEstimate: 'EN PRUEBAS', status: 'DISPONIBLE', details: 'Acreditación backend pendiente.' },
+  { service: 'Retiros', hours: '8:00 a. m. a 10:00 p. m. (Hora de Cuba)', timeEstimate: 'EN PRUEBAS', status: 'DISPONIBLE', details: 'Temporalmente deshabilitado.' },
+  { service: 'Carta Ganadora del Día', hours: '8:00 a. m. a 5:00 p. m. (Hora de Cuba)', timeEstimate: 'EN PRUEBAS', status: 'DISPONIBLE', details: 'Participación server-authoritative pendiente.' },
 ];
 export const RAFFLE_CARDS: RaffleCard[] = [
   { id: 'card-fehu', runeName: 'Fehu', symbol: 'ᚠ', element: 'Fuego Imperial', meaning: 'Riqueza y Abundancia' },
@@ -63,3 +67,5 @@ export const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [];
 export function getCurrentCubaHour(): number { return Number(new Intl.DateTimeFormat('en-US', { timeZone: AUREXA_CONFIG.operationalTimeZone, hour: '2-digit', hour12: false }).format(new Date())); }
 export function isGeneralOperationsOpenNow(): boolean { const h = getCurrentCubaHour(); return h >= AUREXA_CONFIG.openHour && h < AUREXA_CONFIG.closeHour; }
 export function isRaffleOpenNow(): boolean { const h = getCurrentCubaHour(); return h >= AUREXA_CONFIG.raffleOpenHour && h < AUREXA_CONFIG.raffleCloseHour; }
+
+export function buildWhatsAppPurchaseUrl(_userIdentifier: string, _pkg: DiamondPackage, _operationId: string): string { return ''; }
