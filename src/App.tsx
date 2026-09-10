@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { onAuthStateChanged, signOut, sendEmailVerification, type User as FirebaseUser } from 'firebase/auth';
+import { onAuthStateChanged, signOut, type User as FirebaseUser } from 'firebase/auth';
 import { auth } from './lib/firebase';
 import { AuthModal } from './components/AuthModal';
 import { HomeView } from './components/HomeView';
@@ -14,83 +14,17 @@ import { INITIAL_PACKAGES, INITIAL_WELLS, INITIAL_RAFFLE_ROUND, INITIAL_BENEFITS
 import type { MiningWell, UserProfile, ViewType } from './types';
 
 const EMPTY_USER: UserProfile = { id: '', username: '', email: '', phone: '', phoneVerified: false, level: 1, vipTier: 'Iniciado', diamonds: 0, emailVerified: false, createdAt: '', status: 'active' };
-
 export default function App() {
-  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
-  const [authInitialized, setAuthInitialized] = useState(false);
-  const [showAuth, setShowAuth] = useState(false);
-  const [showPortal, setShowPortal] = useState(true);
-  const [view, setView] = useState<ViewType>('home');
-  const [user, setUser] = useState<UserProfile>(EMPTY_USER);
-  const [wells, setWells] = useState<MiningWell[]>(INITIAL_WELLS);
-  const [profileError, setProfileError] = useState<string | null>(null);
-
-  const loadAuthoritativeState = async (fbUser: FirebaseUser) => {
-    const token = await fbUser.getIdToken(true);
-    const response = await fetch(`${AUREXA_CONFIG.stagingBaseUrl}/api/profile`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' });
-    if (!response.ok) throw new Error('No se pudo cargar el perfil autorizado.');
-    const data = await response.json();
-    setUser({ ...EMPTY_USER, ...data.user, id: fbUser.uid, email: fbUser.email || data.user?.email || '', emailVerified: fbUser.emailVerified });
-    if (Array.isArray(data.wells)) setWells(INITIAL_WELLS.map((catalog) => ({ ...catalog, ...(data.wells.find((w: any) => w.id === catalog.id) || {}) })));
-    setProfileError(null);
-  };
-
-  useEffect(() => onAuthStateChanged(auth, async (fbUser) => {
-    setFirebaseUser(fbUser);
-    setAuthInitialized(true);
-    if (!fbUser) { setUser(EMPTY_USER); setShowPortal(true); return; }
-    try { await loadAuthoritativeState(fbUser); } catch (error) { setProfileError(error instanceof Error ? error.message : 'Perfil no disponible.'); }
-    if (fbUser.emailVerified) setShowPortal(false);
-  }), []);
-
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null); const [authInitialized, setAuthInitialized] = useState(false); const [showAuth, setShowAuth] = useState(false); const [showPortal, setShowPortal] = useState(true); const [view, setView] = useState<ViewType>('home'); const [user, setUser] = useState<UserProfile>(EMPTY_USER); const [wells, setWells] = useState<MiningWell[]>(INITIAL_WELLS); const [profileError, setProfileError] = useState<string | null>(null);
+  const loadAuthoritativeState = async (fbUser: FirebaseUser) => { const token = await fbUser.getIdToken(true); const response = await fetch(`${AUREXA_CONFIG.stagingBaseUrl}/api/profile`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' }); if (!response.ok) throw new Error('No se pudo cargar el perfil autorizado.'); const data = await response.json(); setUser({ ...EMPTY_USER, ...data.user, id: fbUser.uid, email: fbUser.email || data.user?.email || '', emailVerified: fbUser.emailVerified }); if (Array.isArray(data.wells)) setWells(INITIAL_WELLS.map((catalog) => ({ ...catalog, ...(data.wells.find((w: any) => w.id === catalog.id) || {}) }))); setProfileError(null); };
+  useEffect(() => onAuthStateChanged(auth, async (fbUser) => { setFirebaseUser(fbUser); setAuthInitialized(true); if (!fbUser) { setUser(EMPTY_USER); setShowPortal(true); return; } try { await loadAuthoritativeState(fbUser); } catch (error) { setProfileError(error instanceof Error ? error.message : 'Perfil no disponible.'); } if (fbUser.emailVerified) setShowPortal(false); }), []);
   const activeWell = useMemo(() => wells.find((w) => w.active) || null, [wells]);
   const refresh = async () => { if (auth.currentUser) { try { await loadAuthoritativeState(auth.currentUser); } catch (error) { setProfileError(error instanceof Error ? error.message : 'No se pudo actualizar el estado.'); } } };
-
-  const claimYield = async (wellId: string) => {
-    if (!auth.currentUser) return;
-    try {
-      const token = await auth.currentUser.getIdToken(true);
-      const key = crypto.randomUUID();
-      const response = await fetch(`${AUREXA_CONFIG.stagingBaseUrl}/api/mining/wells/${wellId}/settle`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', 'Idempotency-Key': key }, body: JSON.stringify({ clientNow: new Date().toISOString() }) });
-      if (!response.ok) throw new Error((await response.json()).error || 'Liquidación rechazada');
-      await refresh();
-    } catch (error) { setProfileError(error instanceof Error ? error.message : 'Liquidación rechazada.'); }
-  };
-
-  const activateWell = async (well: MiningWell) => {
-    if (!auth.currentUser) return;
-    try {
-      const token = await auth.currentUser.getIdToken(true);
-      const response = await fetch(`${AUREXA_CONFIG.stagingBaseUrl}/api/mining/wells/${well.id}/activate`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Idempotency-Key': crypto.randomUUID() } });
-      if (!response.ok) throw new Error((await response.json()).error || 'Activación rechazada');
-      await refresh();
-    } catch (error) { setProfileError(error instanceof Error ? error.message : 'Activación rechazada.'); }
-  };
-
+  const claimYield = async (wellId: string) => { if (!auth.currentUser) return; try { const token = await auth.currentUser.getIdToken(true); const response = await fetch(`${AUREXA_CONFIG.stagingBaseUrl}/api/mining/wells/${wellId}/settle`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() }, body: JSON.stringify({ clientNow: new Date().toISOString() }) }); if (!response.ok) throw new Error((await response.json()).error || 'Liquidación rechazada'); await refresh(); } catch (error) { setProfileError(error instanceof Error ? error.message : 'Liquidación rechazada.'); } };
+  const activateWell = async (well: MiningWell) => { if (!auth.currentUser) return; try { const token = await auth.currentUser.getIdToken(true); const response = await fetch(`${AUREXA_CONFIG.stagingBaseUrl}/api/mining/wells/${well.id}/activate`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Idempotency-Key': crypto.randomUUID() } }); if (!response.ok) throw new Error((await response.json()).error || 'Activación rechazada'); await refresh(); } catch (error) { setProfileError(error instanceof Error ? error.message : 'Activación rechazada.'); } };
   if (!authInitialized) return <div className="min-h-screen bg-[#09070d] text-white grid place-items-center">Cargando Aurexa…</div>;
   if (!firebaseUser) return <GothicPortal onEnter={() => { setShowPortal(false); setShowAuth(true); }} />;
   if (!firebaseUser.emailVerified || showPortal) return <GothicPortal onEnter={() => setShowAuth(true)} />;
-
-  const navigate = (next: ViewType) => { if (next !== 'creator') setView(next); };
-  const logout = async () => { await signOut(auth); setView('home'); setShowPortal(true); };
-
-  return <div className="min-h-screen bg-[#09070d] text-stone-100">
-    <header className="sticky top-0 z-40 border-b border-stone-800 bg-[#09070d]/95 backdrop-blur px-4 py-3 flex flex-wrap items-center gap-2">
-      <strong className="font-gothic text-lg text-amber-300 mr-auto">AUREXA · BETA</strong>
-      {(['home','mining','wallet','store','hours','raffle','benefits','support','guide'] as ViewType[]).map((item) => <button key={item} onClick={() => navigate(item)} className="px-2.5 py-1.5 rounded-lg text-xs border border-stone-800 hover:border-amber-500/50">{item === 'home' ? 'Inicio' : item === 'mining' ? 'Minería' : item === 'wallet' ? 'Billetera' : item === 'store' ? 'Tienda' : item === 'hours' ? 'Horarios' : item === 'raffle' ? 'Carta' : item === 'benefits' ? 'Beneficios' : item === 'support' ? 'Soporte' : 'Guía'}</button>)}
-      <button onClick={logout} className="px-2.5 py-1.5 rounded-lg text-xs border border-stone-800 text-stone-400">Salir</button>
-    </header>
-    {profileError && <div className="mx-auto max-w-6xl mt-4 px-4"><div className="rounded-xl border border-amber-500/30 bg-amber-950/20 p-3 text-xs text-amber-200">{profileError}</div></div>}
-    <main className="max-w-6xl mx-auto p-4 sm:p-6">
-      {view === 'home' && <HomeView user={user} activeWell={activeWell} onNavigate={navigate} onOpenStore={() => navigate('store')} onOpenMining={() => navigate('mining')} onOpenWallet={() => navigate('wallet')} onOpenHours={() => navigate('hours')} onClaimWellYield={claimYield} />}
-      {view === 'mining' && <MiningView wells={wells} userDiamonds={user.diamonds} claimedWelcomeBonus={Boolean(user.claimedWelcomeBonus)} onClaimWelcomeBonus={() => setProfileError('El beneficio de bienvenida está en pruebas hasta disponer de endpoint server-side.')} onActivateWell={activateWell} onClaimDiamonds={claimYield} onNavigateStore={() => navigate('store')} />}
-      {view === 'store' && <StoreView packages={INITIAL_PACKAGES} onSelectPackage={() => setProfileError('Compras en pruebas: no se acredita saldo desde el navegador.')} onNavigateHours={() => navigate('hours')} />}
-      {view === 'wallet' && <WalletView user={user} withdrawals={[]} onOpenWithdrawModal={() => setProfileError('Retiros en pruebas.')} onOpenStore={() => navigate('store')} onNavigateHours={() => navigate('hours')} />}
-      {view === 'hours' && <HoursView />}
-      {view === 'raffle' && <RaffleView currentRound={INITIAL_RAFFLE_ROUND} />}
-      {view === 'benefits' && <BenefitsView benefits={INITIAL_BENEFITS} achievements={INITIAL_ACHIEVEMENTS} />}
-      {(view === 'support' || view === 'guide') && <section className="rounded-2xl border border-stone-800 bg-[#100d17] p-8"><h1 className="font-gothic text-2xl font-bold">{view === 'support' ? 'Soporte' : 'Guía'}</h1><p className="text-sm text-stone-400 mt-2">Función disponible en beta informativa. Las operaciones financieras deben ser confirmadas por el backend.</p></section>}
-    </main>
-    <AuthModal isOpen={showAuth} initialMode="login" onClose={() => setShowAuth(false)} onSuccess={() => { setShowAuth(false); setShowPortal(false); }} unverifiedEmail={firebaseUser.email} />
-  </div>;
+  const navigate = (next: ViewType) => { if (next !== 'creator') setView(next); }; const logout = async () => { await signOut(auth); setView('home'); setShowPortal(true); };
+  return <div className="min-h-screen bg-[#09070d] text-stone-100"><header className="sticky top-0 z-40 border-b border-stone-800 bg-[#09070d]/95 backdrop-blur px-4 py-3 flex flex-wrap items-center gap-2"><strong className="font-gothic text-lg text-amber-300 mr-auto">AUREXA · BETA</strong>{(['home','mining','wallet','store','hours','raffle','benefits','support','guide'] as ViewType[]).map((item) => <button key={item} onClick={() => navigate(item)} className="px-2.5 py-1.5 rounded-lg text-xs border border-stone-800 hover:border-amber-500/50">{item === 'home' ? 'Inicio' : item === 'mining' ? 'Minería' : item === 'wallet' ? 'Billetera' : item === 'store' ? 'Tienda' : item === 'hours' ? 'Horarios' : item === 'raffle' ? 'Carta' : item === 'benefits' ? 'Beneficios' : item === 'support' ? 'Soporte' : 'Guía'}</button>)}<button onClick={logout} className="px-2.5 py-1.5 rounded-lg text-xs border border-stone-800 text-stone-400">Salir</button></header>{profileError && <div className="mx-auto max-w-6xl mt-4 px-4"><div className="rounded-xl border border-amber-500/30 bg-amber-950/20 p-3 text-xs text-amber-200">{profileError}</div></div>}<main className="max-w-6xl mx-auto p-4 sm:p-6">{view === 'home' && <HomeView user={user} activeWell={activeWell} onNavigate={navigate} onOpenStore={() => navigate('store')} onOpenMining={() => navigate('mining')} onOpenWallet={() => navigate('wallet')} onOpenHours={() => navigate('hours')} onClaimWellYield={claimYield} />}{view === 'mining' && <MiningView wells={wells} userDiamonds={user.diamonds} claimedWelcomeBonus={Boolean(user.claimedWelcomeBonus)} onClaimWelcomeBonus={() => setProfileError('El beneficio de bienvenida está en pruebas hasta disponer de endpoint server-side.')} onActivateWell={activateWell} onClaimDiamonds={claimYield} onNavigateStore={() => navigate('store')} />}{view === 'store' && <StoreView packages={INITIAL_PACKAGES} onSelectPackage={() => setProfileError('Compras en pruebas: no se acredita saldo desde el navegador.')} onNavigateHours={() => navigate('hours')} />}{view === 'wallet' && <WalletView user={user} withdrawals={[]} onOpenWithdrawModal={() => setProfileError('Retiros en pruebas.')} onOpenStore={() => navigate('store')} onNavigateHours={() => navigate('hours')} />}{view === 'hours' && <HoursView onNavigate={navigate} />}{view === 'raffle' && <RaffleView currentRound={INITIAL_RAFFLE_ROUND} user={user} userEntry={null} onEnterRaffle={() => setProfileError('Carta Ganadora está en pruebas.')} onClaimPrize={() => setProfileError('Los premios están en pruebas.')} onNavigateStore={() => navigate('store')} />}{view === 'benefits' && <BenefitsView user={user} benefits={INITIAL_BENEFITS} achievements={INITIAL_ACHIEVEMENTS} onClaimBenefit={() => setProfileError('Beneficios en pruebas.')} onClaimAchievement={() => setProfileError('Logros en pruebas.')} />}{(view === 'support' || view === 'guide') && <section className="rounded-2xl border border-stone-800 bg-[#100d17] p-8"><h1 className="font-gothic text-2xl font-bold">{view === 'support' ? 'Soporte' : 'Guía'}</h1><p className="text-sm text-stone-400 mt-2">Función disponible en beta informativa. Las operaciones financieras deben ser confirmadas por el backend.</p></section>}</main><AuthModal isOpen={showAuth} initialMode="login" onClose={() => setShowAuth(false)} onSuccess={() => { setShowAuth(false); setShowPortal(false); }} unverifiedEmail={firebaseUser.email} /></div>;
 }
