@@ -30,10 +30,16 @@ const participants = new Set<string>([mockUser.id]); assert(participants.has(moc
 assert(AUREXA_CONFIG.raffleOpenHour === 8 && AUREXA_CONFIG.raffleCloseHour === 17, '13. Horario de rifa 08:00-17:00 Cuba');
 assert(AUREXA_CONFIG.openHour === 8 && AUREXA_CONFIG.closeHour === 22, '14. Horario general 08:00-22:00 Cuba');
 let attempts = 0; while (attempts < 3) attempts++; assert(attempts === 3, '15. Umbral de bloqueo tras tres intentos fallidos');
-assert(AUREXA_CONFIG.creatorEmail === '' && AUREXA_CONFIG.creatorPhone === '' && AUREXA_CONFIG.telegramAdminChatId === '' && AUREXA_CONFIG.telegramWebhookSecret === '', '16. Sin acceso administrativo privado en cliente');
+
+// Private creator credentials must never be represented or validated in the browser.
+// Authorization is intentionally tested at the backend/API layer, not with a phone, OTP,
+// PIN, hardcoded secret, or client-side session. The public catalog must remain empty.
+assert(AUREXA_CONFIG.creatorEmail === '' && AUREXA_CONFIG.creatorPhone === '' && AUREXA_CONFIG.telegramAdminChatId === '' && AUREXA_CONFIG.telegramWebhookSecret === '', '16. Cliente sin credenciales administrativas privadas');
+assert(!('creatorPin' in AUREXA_CONFIG), '16b. Sin PIN de creadora en configuración pública');
+
 const audit = ['PURCHASE_APPROVED_tx-buy-001', 'RAFFLE_ENTERED_test']; assert(audit.length === 2 && audit[0].startsWith('PURCHASE_APPROVED'), '17. Bitácora secuencial');
 const preventNegative = (balance: number, deduct: number) => balance - deduct >= 0; assert(!preventNegative(mockUser.diamonds, 999999), '18. Saldos negativos bloqueables');
-const waUrl = buildWhatsAppPurchaseUrl(mockUser.username, pkgStarter, 'OP-TEST'); assert(waUrl === '', '19. Compras/WhatsApp deshabilitados mientras falta acreditación segura');
+const waUrl = buildWhatsAppPurchaseUrl(mockUser.username, pkgStarter, 'OP-TEST'); assert(waUrl === '', '19. Compras/WhatsApp deshabilitados hasta existir acreditación segura');
 assert(INITIAL_RAFFLE_ROUND.status !== 'DISPONIBLE' && typeof isGeneralOperationsOpenNow() === 'boolean' && typeof isRaffleOpenNow() === 'boolean', '20. Funciones horarias y rifa no anuncian disponibilidad falsa');
 
 console.log(`\nTotal pruebas: ${passed + failed} | Aprobadas: ${passed} | Fallidas: ${failed}\n`);
