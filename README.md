@@ -1,20 +1,8 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# AUREXA
 
-# Run and deploy your AI Studio app
+AUREXA beta validation is executed on clean GitHub Actions runners.
 
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/aee26bd2-6ee9-4427-bea2-092f47b67cf6
-
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+- Frontend: Bun 1.4.0 with `bun.lock` and `bun install --frozen-lockfile`.
+- Backend: Node 22.16.0 / npm 10.9.2 with npm lockfile v3.
+- No production deployment is performed by the validation workflow.
+- Private Firebase Admin and Telegram credentials must exist only in staging secret storage.
