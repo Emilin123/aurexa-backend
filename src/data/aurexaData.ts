@@ -14,6 +14,10 @@ export const AUREXA_CONFIG = {
   creatorPhone: '',
   telegramAdminChatId: '',
   telegramWebhookSecret: '',
+  creatorEmail: '',
+  creatorPhone: '',
+  telegramAdminChatId: '',
+  telegramWebhookSecret: '',
   withdrawalFeePercent: 25,
   withdrawalFeeRate: 0.25,
   minWithdrawalDiamonds: 10,
@@ -67,5 +71,7 @@ export const INITIAL_AUDIT_LOGS: AuditLogEntry[] = [];
 export function getCurrentCubaHour(): number { return Number(new Intl.DateTimeFormat('en-US', { timeZone: AUREXA_CONFIG.operationalTimeZone, hour: '2-digit', hour12: false }).format(new Date())); }
 export function isGeneralOperationsOpenNow(): boolean { const h = getCurrentCubaHour(); return h >= AUREXA_CONFIG.openHour && h < AUREXA_CONFIG.closeHour; }
 export function isRaffleOpenNow(): boolean { const h = getCurrentCubaHour(); return h >= AUREXA_CONFIG.raffleOpenHour && h < AUREXA_CONFIG.raffleCloseHour; }
+
+export function buildWhatsAppPurchaseUrl(_userIdentifier: string, _pkg: DiamondPackage, _operationId: string): string { return ''; }
 
 export function buildWhatsAppPurchaseUrl(_userIdentifier: string, _pkg: DiamondPackage, _operationId: string): string { return ''; }
