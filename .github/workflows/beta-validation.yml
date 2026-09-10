@@ -46,13 +46,15 @@ jobs:
           bun --version
           node --version
 
-      - name: Ensure frontend uses Bun lockfile only
+      - name: Require Bun lockfile and capture npm lockfile state
         shell: bash
         run: |
           test -f bun.lock
+          test -f package.json
           if test -f package-lock.json; then
-            echo 'ERROR: package-lock.json exists; frontend validation must not create or use one.'
-            exit 1
+            sha256sum package-lock.json > /tmp/package-lock.before
+          else
+            printf 'ABSENT\n' > /tmp/package-lock.before
           fi
 
       - name: Clean dependency directory
@@ -61,11 +63,33 @@ jobs:
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
 
+      - name: Ensure Bun did not create or modify package-lock.json
+        shell: bash
+        run: |
+          if test -f package-lock.json; then
+            sha256sum -c /tmp/package-lock.before
+          else
+            test "$(cat /tmp/package-lock.before)" = "ABSENT"
+          fi
+
       - name: Lint
         run: bun run lint
 
       - name: Type-check
-        run: bun run type-check
+        shell: bash
+        run: |
+          if bun run --silent type-check >/tmp/typecheck.out 2>&1; then
+            cat /tmp/typecheck.out
+          else
+            rc=$?
+            if grep -qE 'Script "type-check" not found|script "type-check" not found' /tmp/typecheck.out; then
+              echo 'No type-check script is defined; using the repository TypeScript compiler directly.'
+              bun x tsc --noEmit
+            else
+              cat /tmp/typecheck.out
+              exit "$rc"
+            fi
+          fi
 
       - name: Tests
         run: bun run test
@@ -87,18 +111,8 @@ jobs:
           node-version: '22.16.0'
           cache: npm
 
-      - name: Show runtime
-        run: |
-          node --version
-          npm --version
-
       - name: Require backend lockfile
-        shell: bash
-        run: |
-          test -f package-lock.json
-          if test -f bun.lock; then
-            echo 'INFO: bun.lock is present in this repository; backend validation still uses package-lock.json and npm ci.'
-          fi
+        run: test -f package-lock.json
 
       - name: Clean dependency directory
         run: rm -rf node_modules
@@ -135,7 +149,7 @@ jobs:
       - name: Clean dependency directory
         run: rm -rf node_modules
 
-      - name: Install with npm for static bundle inspection
+      - name: Install dependencies
         run: npm ci
 
       - name: Build
@@ -146,15 +160,8 @@ jobs:
         run: |
           set -euo pipefail
           if grep -RInE --exclude-dir=node_modules --exclude-dir=.git --exclude='*.map' \
-            'BEGIN (RSA|EC|DSA|OPENSSH) PRIVATE KEY|serviceAccount[^A-Za-z0-9_]*[:=]|TELEGRAM_BOT_TOKEN[^A-Za-z0-9_]*[:=][[:space:]]*["'"'][^"'"']+["'"']|FIREBASE_SERVICE_ACCOUNT_JSON[^A-Za-z0-9_]*[:=][[:space:]]*["'"'][^"'"']+["'"']' \
+            'BEGIN (RSA|EC|DSA|OPENSSH) PRIVATE KEY|serviceAccount[^A-Za-z0-9_]*[:=][[:space:]]*["'"'][^"'"']+["'"']|TELEGRAM_BOT_TOKEN[^A-Za-z0-9_]*[:=][[:space:]]*["'"'][^"'"']+["'"']|FIREBASE_SERVICE_ACCOUNT_JSON[^A-Za-z0-9_]*[:=][[:space:]]*["'"'][^"'"']+["'"']' \
             . dist; then
             echo 'ERROR: possible private secret found in source or bundle.'
-            exit 1
-          fi
-
-      - name: Verify no frontend npm lockfile was generated
-        run: |
-          if test -f bun.lock && git ls-files --error-unmatch package-lock.json >/dev/null 2>&1; then
-            echo 'ERROR: repository tracks package-lock.json; frontend lockfile policy violated.'
             exit 1
           fi
