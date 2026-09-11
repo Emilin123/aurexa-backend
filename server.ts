@@ -350,9 +350,9 @@ app.post('/api/telegram/webhook', async (req, res) => {
 
   const menuKeyboard = {
     inline_keyboard: [
-      [{ text: '💎 Mi cuenta', callback_data: 'menu:account' }, { text: '⛏ Minería', callback_data: 'menu:mining' }],
+      [{ text: '💎 Mi cuenta', callback_data: 'menu:account' }, { text: '⛏ Minería', url: 'https://t.me/AurexaDiamondsAppBot?start=mining' }],
       [{ text: '💰 Billetera', callback_data: 'menu:wallet' }, { text: '🛒 Comprar diamantes', callback_data: 'menu:packages' }],
-      [{ text: '👑 Membresías', callback_data: 'menu:memberships' }, { text: '🃏 Carta Ganadora', callback_data: 'menu:raffle' }],
+      [{ text: '👑 Membresías', callback_data: 'menu:memberships' }, { text: '🃏 Carta Ganadora', url: 'https://t.me/AurexaCartaGanadoraBot?start=carta' }],
       [{ text: '💸 Retiros', callback_data: 'menu:withdraw' }, { text: '📜 Historial', callback_data: 'menu:history' }],
       [{ text: '🆘 Soporte', callback_data: 'menu:support' }, { text: '⚙ Configuración', callback_data: 'menu:settings' }]
     ]
@@ -378,6 +378,8 @@ app.post('/api/telegram/webhook', async (req, res) => {
     const key = callbackData.startsWith('menu:') ? callbackData.slice(5) : '';
     let text = labels[key] || 'Selecciona una opción del menú.';
     let reply_markup: any = undefined;
+    if (key === 'mining') { text = '⛏ Abre el bot independiente de minería para continuar.'; reply_markup = { inline_keyboard: [[{ text: '⛏ Abrir Aurexa Diamonds', url: 'https://t.me/AurexaDiamondsAppBot?start=mining' }]] }; }
+    if (key === 'raffle') { text = '🃏 Abre el bot independiente de Carta Ganadora para continuar.'; reply_markup = { inline_keyboard: [[{ text: '🃏 Abrir Carta Ganadora', url: 'https://t.me/AurexaCartaGanadoraBot?start=carta' }]] }; }
     if (key === 'packages') reply_markup = { inline_keyboard: [[{ text: '300 D · 500 CUP', callback_data: 'buy:iniciado' }], [{ text: '750 D · 1.200 CUP', callback_data: 'buy:alquimista' }], [{ text: '1.800 D · 2.800 CUP', callback_data: 'buy:cofre' }], [{ text: '4.000 D · 6.000 CUP', callback_data: 'buy:tesorero' }], [{ text: '10.000 D · 14.000 CUP', callback_data: 'buy:santuario' }]] };
     if (callbackData === 'support:whatsapp') {
       text = '📲 SOPORTE POR WHATSAPP\n\nEscribe al número de soporte de Aurexa: +5355720394\n\nIncluye tu número de orden y el comprobante. Este contacto se utiliza únicamente para pagos, compras y retiros.';
