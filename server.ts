@@ -305,7 +305,7 @@ app.post('/api/telegram/webhook', async (req, res) => {
     const query = update.callback_query;
     const callbackChatId = query.message?.chat?.id?.toString() || '';
     const callbackData = String(query.data || '');
-    if (callbackChatId !== TELEGRAM_ADMIN_CHAT_ID) return res.status(200).json({ ok: true, rejected: true });
+    // Public menu callbacks are allowed for every Telegram user; creator-only actions remain server-protected.
     const labels: Record<string, string> = {
       account: '💎 MI CUENTA\n\nCuenta de demostración conectada.\nUsa /menu para volver.',
       mining: '⛏ MINERÍA\n\nCuarzo 25 D · Rubí 60 D · Zafiro 150 D · Aurexa Pro 350 D · Antimateria 850 D.\n\nUsa /menu para volver.',
@@ -332,30 +332,19 @@ app.post('/api/telegram/webhook', async (req, res) => {
   const chatId = message.chat?.id?.toString() || '';
   const text = (message.text || '').trim();
 
-  // Strict Authorization Check: Only TELEGRAM_ADMIN_CHAT_ID is authorized!
-  if (chatId !== TELEGRAM_ADMIN_CHAT_ID) {
-    console.warn(`[Telegram Bot] Intento de acceso no autorizado desde Chat ID: ${chatId}`);
-
+  // Public commands work for every Telegram user. Administrative commands remain restricted.
+  const publicCommands = new Set(['/start', '/menu', '/help', '/cancel']);
+  if (chatId !== TELEGRAM_ADMIN_CHAT_ID && !publicCommands.has(text.split(' ')[0].toLowerCase())) {
     if (TELEGRAM_BOT_TOKEN) {
-      try {
-        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: chatId,
-            text: `⛔ *ACCESO DENEGADO*\n\nEste bot es privado y de uso administrativo exclusivo para la creadora de AUREXA (ID no autorizado: \`${chatId}\`).`,
-            parse_mode: 'Markdown',
-          }),
-        });
-      } catch (err) {
-        // Ignore errors sending to unauthorized chat
-      }
+      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId, text: 'Esta función estará disponible desde tu cuenta de Aurexa Diamonds. Usa /menu para comenzar.' })
+      });
     }
-
     return res.status(200).json({ ok: true, rejected: true });
   }
 
-  // Handle authorized commands
+  // Handle public and authorized commands
   let replyText = '';
   const cmd = text.split(' ')[0].toLowerCase();
 
