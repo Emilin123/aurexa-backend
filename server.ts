@@ -15,6 +15,8 @@ const TELEGRAM_ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID || process.env
 const TELEGRAM_WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET || '';
 const SUPABASE_URL = process.env.SUPABASE_URL || '';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
+const CARTA_BOT_TOKEN = process.env.CARTA_BOT_TOKEN || '';
+const CARTA_WEBHOOK_SECRET = process.env.CARTA_WEBHOOK_SECRET || '';
 
 async function ensureTelegramProfile(chatId: string, message: any): Promise<{ id: string; created: boolean } | null> {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !chatId) return null;
@@ -300,6 +302,22 @@ app.post('/api/telegram/notify', async (req, res) => {
     message: 'Alerta despachada exitosamente al chat administrativo de Telegram',
     record: logRecord,
   });
+});
+
+// Carta Ganadora bot webhook: same Telegram ecosystem, separate bot and menu.
+app.post('/api/telegram/carta-webhook', async (req, res) => {
+  const secret = req.headers['x-telegram-bot-api-secret-token'];
+  if (CARTA_WEBHOOK_SECRET && secret !== CARTA_WEBHOOK_SECRET) return res.status(403).json({ error: 'Unauthorized' });
+  const update = req.body;
+  const message = update?.message;
+  if (!message || !CARTA_BOT_TOKEN) return res.status(200).json({ ok: true });
+  const chatId = String(message.chat?.id || '');
+  const text = String(message.text || '').trim().toLowerCase();
+  if (text === '/start' || text === '/menu' || text === '/runes') {
+    const body = { chat_id: chatId, text: '🃏 CARTA GANADORA DEL DÍA\n\nEntrada: 100 diamantes\nPremio: 1.000 CUP\nParticipantes: máximo 500\nHorario: 08:00 a 17:00\n\nElige una opción:', reply_markup: { inline_keyboard: [[{ text: '🎴 Ver runas', callback_data: 'carta:runes' }, { text: '🎟 Participar', callback_data: 'carta:participate' }], [{ text: '👤 Mi entrada', callback_data: 'carta:ticket' }, { text: '🏆 Resultado', callback_data: 'carta:result' }]] } };
+    await fetch(`https://api.telegram.org/bot${CARTA_BOT_TOKEN}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  }
+  return res.status(200).json({ ok: true });
 });
 
 // 4. Telegram Webhook endpoint (Receives updates from Telegram servers)
