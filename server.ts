@@ -18,6 +18,22 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
 const CARTA_BOT_TOKEN = process.env.CARTA_BOT_TOKEN || '';
 const CARTA_WEBHOOK_SECRET = process.env.CARTA_WEBHOOK_SECRET || '';
 
+async function createPurchaseRequest(chatId: string, packageCode: string): Promise<string | null> {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) return null;
+  const catalog: Record<string, { amount: number; diamonds: number; name: string }> = {
+    iniciado: { amount: 500, diamonds: 300, name: 'Iniciado Cripto' },
+    alquimista: { amount: 1200, diamonds: 750, name: 'Alquimista Real' },
+    cofre: { amount: 2800, diamonds: 1800, name: 'Cofre de Mina Real' },
+    tesorero: { amount: 6000, diamonds: 4000, name: 'Tesorero Imperial' },
+    santuario: { amount: 14000, diamonds: 10000, name: 'Santuario de Obsidiana' }
+  };
+  const item = catalog[packageCode]; if (!item) return null;
+  const idempotencyKey = `tg-${chatId}-${packageCode}-${Date.now()}`;
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/purchase_requests`, { method: 'POST', headers: { apikey: SUPABASE_SERVICE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' }, body: JSON.stringify({ amount: item.amount, tokens_requested: item.diamonds, package_code: packageCode, status: 'pending', firebase_uid: `telegram:${chatId}`, idempotency_key: idempotencyKey }) });
+  const rows = await response.json();
+  return Array.isArray(rows) && rows[0]?.id ? String(rows[0].id) : null;
+}
+
 async function ensureTelegramProfile(chatId: string, message: any): Promise<{ id: string; created: boolean } | null> {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !chatId) return null;
   const headers = { apikey: SUPABASE_SERVICE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`, 'Content-Type': 'application/json' };
@@ -360,10 +376,19 @@ app.post('/api/telegram/webhook', async (req, res) => {
       settings: '⚙ CONFIGURACIÓN\n\nPreferencias de Aurexa Diamonds.\nUsa /menu para volver.'
     };
     const key = callbackData.startsWith('menu:') ? callbackData.slice(5) : '';
-    const text = labels[key] || 'Selecciona una opción del menú.';
+    let text = labels[key] || 'Selecciona una opción del menú.';
+    let reply_markup: any = undefined;
+    if (key === 'packages') reply_markup = { inline_keyboard: [[{ text: '300 D · 500 CUP', callback_data: 'buy:iniciado' }], [{ text: '750 D · 1.200 CUP', callback_data: 'buy:alquimista' }], [{ text: '1.800 D · 2.800 CUP', callback_data: 'buy:cofre' }], [{ text: '4.000 D · 6.000 CUP', callback_data: 'buy:tesorero' }], [{ text: '10.000 D · 14.000 CUP', callback_data: 'buy:santuario' }]] };
+    if (callbackData.startsWith('buy:')) {
+      const code = callbackData.slice(4);
+      const orderId = await createPurchaseRequest(callbackChatId, code);
+      const names: Record<string,string> = { iniciado: 'Iniciado Cripto — 300 D por 500 CUP', alquimista: 'Alquimista Real — 750 D por 1.200 CUP', cofre: 'Cofre de Mina Real — 1.800 D por 2.800 CUP', tesorero: 'Tesorero Imperial — 4.000 D por 6.000 CUP', santuario: 'Santuario de Obsidiana — 10.000 D por 14.000 CUP' };
+      text = `🧾 ORDEN DE COMPRA\n\n${names[code] || 'Paquete seleccionado'}\nOrden: ${orderId || 'pendiente de registro'}\nEstado: Pendiente de pago\n\nPaga por Transfermóvil o EnZona y envía el comprobante por WhatsApp al número de soporte configurado. Incluye el número de orden.\n\nLos diamantes se acreditan únicamente después de verificar y aprobar el pago.`;
+      reply_markup = { inline_keyboard: [[{ text: '📲 Ver contacto de WhatsApp', callback_data: 'support:whatsapp' }], [{ text: '🛒 Ver otros paquetes', callback_data: 'menu:packages' }]] };
+    }
     if (TELEGRAM_BOT_TOKEN) {
       await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ callback_query_id: query.id }) });
-      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: callbackChatId, text }) });
+      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: callbackChatId, text, ...(reply_markup ? { reply_markup } : {}) }) });
     }
     return res.status(200).json({ ok: true, callback: key });
   }
