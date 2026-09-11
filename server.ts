@@ -379,6 +379,10 @@ app.post('/api/telegram/webhook', async (req, res) => {
     let text = labels[key] || 'Selecciona una opción del menú.';
     let reply_markup: any = undefined;
     if (key === 'packages') reply_markup = { inline_keyboard: [[{ text: '300 D · 500 CUP', callback_data: 'buy:iniciado' }], [{ text: '750 D · 1.200 CUP', callback_data: 'buy:alquimista' }], [{ text: '1.800 D · 2.800 CUP', callback_data: 'buy:cofre' }], [{ text: '4.000 D · 6.000 CUP', callback_data: 'buy:tesorero' }], [{ text: '10.000 D · 14.000 CUP', callback_data: 'buy:santuario' }]] };
+    if (callbackData === 'support:whatsapp') {
+      text = '📲 SOPORTE POR WHATSAPP\n\nEscribe al número de soporte de Aurexa: +5355720394\n\nIncluye tu número de orden y el comprobante. Este contacto se utiliza únicamente para pagos, compras y retiros.';
+      reply_markup = { inline_keyboard: [[{ text: '🛒 Volver a paquetes', callback_data: 'menu:packages' }]] };
+    }
     if (callbackData.startsWith('buy:')) {
       const code = callbackData.slice(4);
       const orderId = await createPurchaseRequest(callbackChatId, code);
