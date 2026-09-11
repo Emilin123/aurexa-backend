@@ -289,10 +289,45 @@ app.post('/api/telegram/webhook', async (req, res) => {
   }
 
   const update = req.body;
-  if (!update || !update.message) {
-    return res.status(200).json({ ok: true });
+  if (!update) return res.status(200).json({ ok: true });
+
+  const menuKeyboard = {
+    inline_keyboard: [
+      [{ text: '💎 Mi cuenta', callback_data: 'menu:account' }, { text: '⛏ Minería', callback_data: 'menu:mining' }],
+      [{ text: '💰 Billetera', callback_data: 'menu:wallet' }, { text: '🛒 Comprar diamantes', callback_data: 'menu:packages' }],
+      [{ text: '👑 Membresías', callback_data: 'menu:memberships' }, { text: '🃏 Carta Ganadora', callback_data: 'menu:raffle' }],
+      [{ text: '💸 Retiros', callback_data: 'menu:withdraw' }, { text: '📜 Historial', callback_data: 'menu:history' }],
+      [{ text: '🆘 Soporte', callback_data: 'menu:support' }, { text: '⚙ Configuración', callback_data: 'menu:settings' }]
+    ]
+  };
+
+  if (update.callback_query) {
+    const query = update.callback_query;
+    const callbackChatId = query.message?.chat?.id?.toString() || '';
+    const callbackData = String(query.data || '');
+    if (callbackChatId !== TELEGRAM_ADMIN_CHAT_ID) return res.status(200).json({ ok: true, rejected: true });
+    const labels: Record<string, string> = {
+      account: '💎 MI CUENTA\n\nCuenta de demostración conectada.\nUsa /menu para volver.',
+      mining: '⛏ MINERÍA\n\nMinería automática tras activar un minero.\nUsa /menu para volver.',
+      wallet: '💰 BILLETERA\n\nSaldo y movimientos disponibles en la próxima fase.\nUsa /menu para volver.',
+      packages: '🛒 COMPRAR DIAMANTES\n\nPaquetes disponibles próximamente.\nUsa /menu para volver.',
+      memberships: '👑 MEMBRESÍAS\n\nBarón Gótico · Soberano Real · Corona Imperial Aurexa.\nUsa /menu para volver.',
+      raffle: '🃏 CARTA GANADORA\n\nEntrada 100 D · Premio 1.000 CUP · 08:00 a 17:00.\nUsa /menu para volver.',
+      withdraw: '💸 RETIROS\n\nMínimo 10 D · comisión 25%.\nUsa /menu para volver.',
+      history: '📜 HISTORIAL\n\nAquí aparecerán tus operaciones.\nUsa /menu para volver.',
+      support: '🆘 SOPORTE\n\nEscribe tu consulta después de pulsar /support.\nUsa /menu para volver.',
+      settings: '⚙ CONFIGURACIÓN\n\nPreferencias de Aurexa Diamonds.\nUsa /menu para volver.'
+    };
+    const key = callbackData.startsWith('menu:') ? callbackData.slice(5) : '';
+    const text = labels[key] || 'Selecciona una opción del menú.';
+    if (TELEGRAM_BOT_TOKEN) {
+      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/answerCallbackQuery`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ callback_query_id: query.id }) });
+      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: callbackChatId, text }) });
+    }
+    return res.status(200).json({ ok: true, callback: key });
   }
 
+  if (!update.message) return res.status(200).json({ ok: true });
   const message = update.message;
   const chatId = message.chat?.id?.toString() || '';
   const text = (message.text || '').trim();
@@ -326,7 +361,7 @@ app.post('/api/telegram/webhook', async (req, res) => {
 
   switch (cmd) {
     case '/start':
-      replyText = `👑 *BIENVENIDA AL SISTEMA DE AVISOS AUREXA*\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\nHola, Creadora. El bot administrativo está activo y sincronizado.\n\nEscribe /help para ver los comandos de consulta disponibles.`;
+      replyText = `👑 *BIENVENIDA A AUREXA DIAMONDS*\n\nSelecciona una opción del menú para continuar.`;
       break;
 
     case '/id':
@@ -341,6 +376,9 @@ app.post('/api/telegram/webhook', async (req, res) => {
       replyText = `⏳ *OPERACIONES PENDIENTES*\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\nPara aprobar o rechazar compras o retiros, debes abrir el Panel de Creadora y reautenticarte con 2FA.\n\n⚠️ No se permite aprobación por chat sin segundo factor.`;
       break;
 
+    case '/menu':
+      replyText = `💎 *MENÚ PRINCIPAL DE AUREXA DIAMONDS*\n\nSelecciona una opción:`;
+      break;
     case '/help':
     default:
       replyText = `📖 *COMANDOS ADMINISTRATIVOS*\n/start — Iniciar bot\n/id — Ver chat ID\n/status — Estado general\n/users — Resumen de usuarios\n/pending — Operaciones pendientes\n/payments — Pagos pendientes\n/withdrawals — Retiros pendientes\n/mining — Pozos de minería\n/raffle — Carta Ganadora\n/alerts — Alertas recientes\n/logs — Resumen de auditoría\n/health — Chequeo de servicios\n/help — Ayuda`;
@@ -356,6 +394,7 @@ app.post('/api/telegram/webhook', async (req, res) => {
           chat_id: chatId,
           text: replyText,
           parse_mode: 'Markdown',
+          reply_markup: (cmd === '/start' || cmd === '/menu') ? menuKeyboard : undefined,
         }),
       });
     } catch (err: any) {
