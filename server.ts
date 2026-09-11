@@ -308,10 +308,10 @@ app.post('/api/telegram/webhook', async (req, res) => {
     if (callbackChatId !== TELEGRAM_ADMIN_CHAT_ID) return res.status(200).json({ ok: true, rejected: true });
     const labels: Record<string, string> = {
       account: '💎 MI CUENTA\n\nCuenta de demostración conectada.\nUsa /menu para volver.',
-      mining: '⛏ MINERÍA\n\nMinería automática tras activar un minero.\nUsa /menu para volver.',
+      mining: '⛏ MINERÍA\n\nCuarzo 25 D · Rubí 60 D · Zafiro 150 D · Aurexa Pro 350 D · Antimateria 850 D.\n\nUsa /menu para volver.',
       wallet: '💰 BILLETERA\n\nSaldo y movimientos disponibles en la próxima fase.\nUsa /menu para volver.',
-      packages: '🛒 COMPRAR DIAMANTES\n\nPaquetes disponibles próximamente.\nUsa /menu para volver.',
-      memberships: '👑 MEMBRESÍAS\n\nBarón Gótico · Soberano Real · Corona Imperial Aurexa.\nUsa /menu para volver.',
+      packages: '🛒 COMPRAR DIAMANTES\n\n300 D — 500 CUP\n750 D — 1.200 CUP +10%\n1.800 D — 2.800 CUP +15%\n4.000 D — 6.000 CUP +25%\n10.000 D — 14.000 CUP +35%\n\nPagos por Transfermóvil o EnZona.\nUsa /menu para volver.',
+      memberships: '👑 MEMBRESÍAS\n\nBarón Gótico — 3.500 CUP — 1,5x — 30 días\nSoberano Real — 8.500 CUP — 2,5x — 30 días\nCorona Imperial Aurexa — 18.000 CUP — 5x — 30 días\n\nUsa /menu para volver.',
       raffle: '🃏 CARTA GANADORA\n\nEntrada 100 D · Premio 1.000 CUP · 08:00 a 17:00.\nUsa /menu para volver.',
       withdraw: '💸 RETIROS\n\nMínimo 10 D · comisión 25%.\nUsa /menu para volver.',
       history: '📜 HISTORIAL\n\nAquí aparecerán tus operaciones.\nUsa /menu para volver.',
