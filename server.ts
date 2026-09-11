@@ -13,6 +13,29 @@ app.use(express.json());
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
 const TELEGRAM_ADMIN_CHAT_ID = process.env.TELEGRAM_ADMIN_CHAT_ID || process.env.ADMIN_CHAT_ID || '';
 const TELEGRAM_WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET || '';
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
+
+async function ensureTelegramProfile(chatId: string, message: any): Promise<{ id: string; created: boolean } | null> {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !chatId) return null;
+  const headers = { apikey: SUPABASE_SERVICE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`, 'Content-Type': 'application/json' };
+  const uid = `telegram:${chatId}`;
+  try {
+    const found = await fetch(`${SUPABASE_URL}/rest/v1/profiles?firebase_uid=eq.${encodeURIComponent(uid)}&select=id`, { headers });
+    const rows = await found.json();
+    if (Array.isArray(rows) && rows[0]?.id) return { id: rows[0].id, created: false };
+    const username = String(message?.from?.username || `telegram_${chatId}`).slice(0, 80);
+    const created = await fetch(`${SUPABASE_URL}/rest/v1/profiles`, { method: 'POST', headers: { ...headers, Prefer: 'return=representation' }, body: JSON.stringify({ firebase_uid: uid, username }) });
+    const createdRows = await created.json();
+    const profile = Array.isArray(createdRows) ? createdRows[0] : null;
+    if (!profile?.id) return null;
+    await fetch(`${SUPABASE_URL}/rest/v1/wallets`, { method: 'POST', headers: { ...headers, Prefer: 'return=minimal' }, body: JSON.stringify({ user_id: profile.id, diamonds: 0, coins: 0, crystals: 0, points: 0, energy: 0, max_energy: 0, level: 1, xp: 0 }) });
+    return { id: profile.id, created: true };
+  } catch (error) {
+    console.error('[Telegram onboarding] No se pudo crear perfil');
+    return null;
+  }
+}
 
 // In-memory stats & deduplication
 const processedEventIds = new Set<string>();
@@ -331,6 +354,7 @@ app.post('/api/telegram/webhook', async (req, res) => {
   const message = update.message;
   const chatId = message.chat?.id?.toString() || '';
   const text = (message.text || '').trim();
+  const telegramProfile = await ensureTelegramProfile(chatId, message);
 
   // Public commands work for every Telegram user. Administrative commands remain restricted.
   const publicCommands = new Set(['/start', '/menu', '/help', '/cancel']);
@@ -350,7 +374,7 @@ app.post('/api/telegram/webhook', async (req, res) => {
 
   switch (cmd) {
     case '/start':
-      replyText = `👑 *BIENVENIDA A AUREXA DIAMONDS*\n\nSelecciona una opción del menú para continuar.`;
+      replyText = telegramProfile?.created ? `✅ *CUENTA CREADA EN AUREXA DIAMONDS*\n\nTu cuenta de Telegram quedó registrada.\n\nSelecciona una opción del menú para continuar.` : `👑 *BIENVENIDA A AUREXA DIAMONDS*\n\nTu cuenta ya está identificada.\n\nSelecciona una opción del menú para continuar.`;
       break;
 
     case '/id':
